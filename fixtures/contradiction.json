@@ -1,0 +1,23 @@
+{
+  "name": "contradiction",
+  "mvp": true,
+  "description": "Customer rejects the premium plan outright, then twenty minutes later asserts they need it. No explicit revision in between - the position simply flipped.",
+  "utterances": [
+    {"index": 0, "speaker": "AGENT", "t_ms": 12000, "text": "Before we go further, do you want me to include the premium support plan?"},
+    {"index": 1, "speaker": "CUSTOMER", "t_ms": 21000, "text": "No, I don't need the premium plan. We've never used support in three years."},
+    {"index": 2, "speaker": "AGENT", "t_ms": 35000, "text": "Understood, I'll leave it off the quote."},
+    {"index": 3, "speaker": "CUSTOMER", "t_ms": 640000, "text": "One thing, our new site has nobody technical on staff."},
+    {"index": 4, "speaker": "AGENT", "t_ms": 655000, "text": "That's worth knowing."},
+    {"index": 5, "speaker": "CUSTOMER", "t_ms": 1208000, "text": "So obviously we need the premium plan on this one, that's a given."}
+  ],
+  "events": [
+    {"kind": "preference", "speaker": "CUSTOMER", "utterance_index": 1, "t_ms": 21000,
+     "topic": "premium_plan", "polarity": false, "text": "does not want premium plan"},
+    {"kind": "preference", "speaker": "CUSTOMER", "utterance_index": 5, "t_ms": 1208000,
+     "topic": "premium_plan", "polarity": true, "text": "needs premium plan"}
+  ],
+  "expected_alerts": [
+    {"event_type": "contradiction", "speaker": "CUSTOMER",
+     "evidence_indices": [1, 5], "min_confidence": 0.8}
+  ]
+}

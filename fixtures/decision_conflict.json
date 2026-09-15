@@ -1,0 +1,18 @@
+{
+  "name": "decision_conflict",
+  "mvp": false,
+  "description": "POST-MVP (DR-009). A decision is recorded for Option A, then the room drifts into discussing Option B as though it had been selected. Kept to prove the architecture generalises; no detector is built.",
+  "utterances": [
+    {"index": 0, "speaker": "LEAD", "t_ms": 45000, "text": "Alright, we're going with option A, the managed service."},
+    {"index": 1, "speaker": "ENGINEER", "t_ms": 52000, "text": "Agreed, option A."},
+    {"index": 2, "speaker": "ENGINEER", "t_ms": 430000, "text": "So for option B, do we need the extra node pool or not?"},
+    {"index": 3, "speaker": "LEAD", "t_ms": 441000, "text": "Two should be enough for B."}
+  ],
+  "events": [
+    {"kind": "decision", "speaker": "LEAD", "utterance_index": 0, "t_ms": 45000,
+     "topic": "platform_choice", "value": "option_a", "text": "selected option A"},
+    {"kind": "decision", "speaker": "LEAD", "utterance_index": 3, "t_ms": 441000,
+     "topic": "platform_choice", "value": "option_b", "text": "proceeding as if option B"}
+  ],
+  "expected_alerts": []
+}

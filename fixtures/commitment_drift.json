@@ -1,0 +1,27 @@
+{
+  "name": "commitment_drift",
+  "mvp": true,
+  "description": "The canonical demo. Customer states Friday as a hard deadline at 00:18. At 01:42 the agent proposes Monday and the customer gives an ambiguous acceptance. Nobody ever explicitly revised the Friday constraint - the outcome changed on its own.",
+  "utterances": [
+    {"index": 0, "speaker": "AGENT", "t_ms": 6000, "text": "Let's talk timing. When do you need this delivered?"},
+    {"index": 1, "speaker": "CUSTOMER", "t_ms": 18000, "text": "Friday is a hard deadline. Monday won't work, we have the audit that morning."},
+    {"index": 2, "speaker": "AGENT", "t_ms": 31000, "text": "Got it. Let me check what the warehouse can do."},
+    {"index": 3, "speaker": "CUSTOMER", "t_ms": 74000, "text": "And the quantity stays at two hundred units."},
+    {"index": 4, "speaker": "AGENT", "t_ms": 88000, "text": "Two hundred, noted."},
+    {"index": 5, "speaker": "AGENT", "t_ms": 102000, "text": "So Monday delivery works for you?"},
+    {"index": 6, "speaker": "CUSTOMER", "t_ms": 107000, "text": "Yeah... I guess."}
+  ],
+  "events": [
+    {"kind": "constraint", "speaker": "CUSTOMER", "utterance_index": 1, "t_ms": 18000,
+     "topic": "delivery_date", "value": "friday", "text": "Friday is a hard deadline"},
+    {"kind": "commitment", "speaker": "CUSTOMER", "utterance_index": 3, "t_ms": 74000,
+     "topic": "quantity", "value": "200", "text": "quantity stays at 200 units"},
+    {"kind": "commitment", "speaker": "CUSTOMER", "utterance_index": 6, "t_ms": 107000,
+     "topic": "delivery_date", "value": "monday", "ambiguous": true,
+     "text": "ambiguous acceptance of Monday"}
+  ],
+  "expected_alerts": [
+    {"event_type": "commitment_drift", "speaker": "CUSTOMER",
+     "evidence_indices": [1, 6], "min_confidence": 0.9}
+  ]
+}
