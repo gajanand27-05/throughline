@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Throughline</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: #fbfbfa; color: #1a1a19; padding: 2rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #131313; color: #e8e8e6; }
+  }
+  main { max-width: 34rem; }
+  h1 { font-size: 1.5rem; letter-spacing: -0.02em; margin: 0 0 .25rem; }
+  .q { font-size: 1.05rem; opacity: .75; margin: 0 0 1.75rem; }
+  .q b { font-weight: 600; opacity: 1; }
+  .status {
+    border: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+    border-radius: 10px; padding: 1rem 1.15rem; font-size: .9rem;
+  }
+  .status h2 {
+    font-size: .72rem; text-transform: uppercase; letter-spacing: .09em;
+    opacity: .55; margin: 0 0 .6rem; font-weight: 600;
+  }
+  ul { margin: 0; padding: 0; list-style: none; }
+  li { display: flex; gap: .6rem; padding: .18rem 0; }
+  li span:first-child { width: 1.1rem; flex: none; }
+  .pending { opacity: .5; }
+  code {
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+    font-size: .85em;
+    background: color-mix(in srgb, currentColor 8%, transparent);
+    padding: .1em .35em; border-radius: 4px;
+  }
+  footer { margin-top: 1.5rem; font-size: .82rem; opacity: .55; }
+  a { color: inherit; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Throughline</h1>
+  <p class="q">Not <i>“what was said?”</i> &mdash; <b>“what changed?”</b></p>
+
+  <div class="status">
+    <h2>Build status</h2>
+    <ul>
+      <li><span>✅</span><span>Integrity engine &mdash; memory, detectors, evidence gate (32 tests)</span></li>
+      <li class="pending"><span>⬜</span><span>LLM extraction: utterances &rarr; claims and commitments</span></li>
+      <li class="pending"><span>⬜</span><span>Live transcript and alert view</span></li>
+      <li class="pending"><span>⬜</span><span>AssemblyAI realtime streaming + speaker attribution</span></li>
+      <li class="pending"><span>⬜</span><span>Replay mode</span></li>
+      <li class="pending"><span>⬜</span><span>CLARIFY intervention</span></li>
+    </ul>
+  </div>
+
+  <footer>
+    Pipeline check: <a href="/api/health"><code>/api/health</code></a> &middot;
+    <a href="https://github.com/gajanand27-05/throughline">source</a><br>
+    AssemblyAI Voice Agent Hackathon &middot; team <code>tripod</code>
+  </footer>
+</main>
+</body>
+</html>
