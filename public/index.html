@@ -10,12 +10,17 @@
     --bg: #fbfbfa; --fg: #1a1a19; --muted: #6b6b66; --line: #e2e1dc;
     --card: #ffffff; --alert: #c0392b; --alert-bg: #fdf3f2; --ok: #2d7a4f;
     --accent: #1a1a19;
+    /* Arrival flash must NOT be the evidence colour. Red means "this is cited
+       evidence" and nothing else, or the clean control looks like it is
+       flagging every line it is supposed to be ignoring. */
+    --flash: #eceae5;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #131313; --fg: #e8e8e6; --muted: #8b8b85; --line: #2a2a28;
       --card: #1a1a19; --alert: #e8705f; --alert-bg: #2a1a18; --ok: #6fbf8f;
       --accent: #e8e8e6;
+      --flash: #262624;
     }
   }
   * { box-sizing: border-box; }
@@ -44,9 +49,18 @@
     padding: .45rem 1rem; border-radius: 7px; border: 1px solid var(--accent);
     background: var(--accent); color: var(--bg);
   }
+  .speed {
+    font: inherit; font-size: .8rem; color: var(--muted); cursor: pointer;
+    background: transparent; border: 1px solid var(--line);
+    border-radius: 6px; padding: .35rem .5rem;
+  }
   .clock {
     font: .82rem ui-monospace, "Cascadia Code", Consolas, monospace;
     color: var(--muted); letter-spacing: .04em;
+  }
+  .idle {
+    border: 1px dashed var(--line); border-radius: 9px; padding: 1.6rem 1rem;
+    color: var(--muted); font-size: .88rem; text-align: center;
   }
   .verdict { margin-left: auto; font-size: .82rem; font-weight: 600; }
   .verdict.clean { color: var(--ok); }
@@ -60,7 +74,10 @@
   .turn.hidden { display: none; }
   .turn.cited { background: var(--alert-bg); border-radius: 7px; padding: .5rem .6rem; }
   .turn.flash { animation: flash 1.1s ease-out; }
-  @keyframes flash { from { background: var(--alert-bg); } to { background: transparent; } }
+  @keyframes flash { from { background: var(--flash); } to { background: transparent; } }
+  /* A cited turn keeps the evidence tint after the neutral arrival flash ends. */
+  .turn.cited.flash { animation: flash-cited 1.1s ease-out; }
+  @keyframes flash-cited { from { background: var(--flash); } to { background: var(--alert-bg); } }
   .t {
     font: .78rem ui-monospace, "Cascadia Code", Consolas, monospace;
     color: var(--muted); padding-top: .18rem;
@@ -89,10 +106,15 @@
   .ev:hover { background: var(--alert-bg); }
   .ev .lab { color: var(--muted); font-size: .76rem; font-weight: 600; padding-top: .1rem; }
   .ev .txt em { font-style: normal; color: var(--muted); }
-  /* Context is NOT evidence. It must never look like evidence (DR-005). */
-  .ev.ctx { cursor: pointer; opacity: .72; }
-  .ev.ctx .txt { font-style: italic; }
-  .ev.ctx .lab { font-weight: 400; text-transform: none; }
+  /* Context is NOT evidence. It must never look like evidence (DR-005), and
+     must read as context instantly rather than on close inspection. */
+  .ev.ctx { cursor: pointer; margin-left: 4.6rem; grid-template-columns: 1fr;
+            border-left: 2px solid var(--line); padding-left: .7rem; }
+  .ev.ctx .txt { font-style: italic; color: var(--muted); font-size: .82rem; }
+  .ev.ctx .lab {
+    font-weight: 400; text-transform: none; font-size: .68rem;
+    letter-spacing: .05em; opacity: .8; padding: 0 0 .1rem;
+  }
   .meta {
     display: flex; gap: .9rem; flex-wrap: wrap; align-items: baseline;
     margin-top: .75rem; padding-top: .7rem; border-top: 1px solid var(--line);
@@ -142,6 +164,11 @@
 
     <div class="controls">
       <button class="play" id="play">▶ Play conversation</button>
+      <select id="speed" class="speed" title="Slower speeds leave room to narrate over the demo">
+        <option value="1100">Normal</option>
+        <option value="2200">Slow</option>
+        <option value="3400">Narration</option>
+      </select>
       <span class="clock" id="clock">00:00</span>
       <span class="verdict" id="verdict"></span>
     </div>
@@ -150,7 +177,7 @@
   <div id="transcript"></div>
 
   <footer>
-    Every alert above was produced by <code>engine.run()</code> and cleared the
+    Every alert in this demo was produced by <code>engine.run()</code> and cleared the
     evidence gate — two real, distinct, chronologically ordered utterances in
     this transcript. No citable evidence, no alert.<br>
     Pipeline check: <a href="/api/health"><code>/api/health</code></a> ·
@@ -162,6 +189,7 @@
 <script>
 const GAP_MS = 90_000;      // gap worth marking explicitly in the transcript
 const CONTEXT_MS = 30_000;  // how far back a turn can be and still be "in reply to"
+const HOLD_MS = 2600;       // pause on the alert — it is the point of the demo
 
 const mmss = ms => {
   const s = Math.floor(ms / 1000);
@@ -194,7 +222,7 @@ function render() {
     const gap = prev ? u.t_ms - prev.t_ms : 0;
     const marker = gap >= GAP_MS
       ? `<div class="gap${shown.has(u.index) ? "" : " hidden"}">
-           <span></span><span>⏩ ${humanGap(gap)} later</span></div>`
+           <span></span><span>· · ·&nbsp;&nbsp;${humanGap(gap)} later</span></div>`
       : "";
     return `${marker}<div class="turn${shown.has(u.index) ? "" : " hidden"}${cite ? " cited" : ""}"
                  id="u${u.index}">
@@ -202,6 +230,12 @@ function render() {
               <span><span class="spk">${u.speaker}</span>${escapeHTML(u.text)}</span>
             </div>${alerts}`;
   }).join("");
+
+  if (cursor < 0) {
+    $("transcript").innerHTML =
+      `<div class="idle">Press <b>▶ Play conversation</b> to watch this
+       ${sc.utterances.length}-turn conversation unfold with real timestamps.</div>`;
+  }
 
   const done = cursor >= sc.utterances.length - 1;
   const v = $("verdict");
@@ -272,18 +306,36 @@ const escapeHTML = s => s.replace(/[&<>"]/g, c =>
 
 function stop() { clearInterval(timer); timer = null; $("play").textContent = "▶ Play conversation"; }
 
+function step() {
+  const sc = scenarios[current];
+  if (cursor >= sc.utterances.length - 1) return stop();
+  cursor++;
+  render();
+
+  const u = sc.utterances[cursor];
+  const el = $("u" + u.index);
+  if (el) el.classList.add("flash");
+
+  // When the alert fires, bring it into view and hold. This is the moment the
+  // whole demo builds toward; it must not happen below the fold.
+  const fired = sc.alerts.some(a => a.fires_at === u.index);
+  const focus = fired ? $("transcript").querySelector(".alert:last-of-type") : el;
+  if (focus) focus.scrollIntoView({ behavior: "smooth", block: fired ? "center" : "nearest" });
+
+  if (fired && timer) { clearInterval(timer); timer = setTimeout(resume, HOLD_MS); }
+}
+
+function resume() {
+  if (timer === null) return;
+  timer = setInterval(step, Number($("speed").value));
+}
+
 function play() {
   const sc = scenarios[current];
   if (timer) return stop();
   if (cursor >= sc.utterances.length - 1) cursor = -1;
   $("play").textContent = "❚❚ Pause";
-  timer = setInterval(() => {
-    if (cursor >= sc.utterances.length - 1) return stop();
-    cursor++;
-    render();
-    const el = $("u" + sc.utterances[cursor].index);
-    if (el) el.classList.add("flash");
-  }, 1100);
+  timer = setInterval(step, Number($("speed").value));
   render();
 }
 
@@ -294,6 +346,7 @@ function select(i) {
 }
 
 $("play").onclick = play;
+$("speed").onchange = () => { if (timer) { clearInterval(timer); resume(); } };
 $("transcript").onclick = e => {
   const ev = e.target.closest("[data-goto]");
   if (!ev) return;
