@@ -32,6 +32,22 @@ Specifically DO NOT emit an event when:
 - The speaker is repeating a value already established without changing it.
 - The speaker is describing a situation rather than committing to anything.
 
+ONE EXCEPTION, and it matters more than any other rule here. A hedged,
+reluctant or half-hearted YES to a value someone just proposed is a COMMITMENT,
+not an acknowledgement. It looks like agreement and it reads like filler, but it
+is the moment a term actually changes. Record it, take the value from the
+question being answered, and set ambiguous=true.
+
+  context   A: "Can you live with the smaller unit then?"
+  utterance B: "Yeah... I suppose."
+  -> {"kind": "commitment", "topic": "<existing key for that subject>",
+      "value": "smaller_unit", "polarity": true, "ambiguous": true,
+      "explicit_revision": false, "text": "hedged acceptance of the smaller unit"}
+
+Answering a question with a bare "yes", "fine", "okay then" or "if we have to"
+is the same case whenever a specific value is on the table. Without the value
+from the question the utterance means nothing, so read the question to find it.
+
 Reuse an existing topic identifier whenever the utterance concerns that same
 subject. Two statements about the same subject MUST share a topic string, or
 the conflict between them becomes invisible.
