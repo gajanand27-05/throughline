@@ -70,6 +70,31 @@ date is still negotiable.
 > judge evaluating the live URL alone. The claim here is detection with citable evidence,
 > and that is what the demo shows.
 
+## The wedge
+
+Plenty of systems check what a speaker says against a **rulebook** — a regulation, a
+required disclosure, a policy.
+
+**Throughline checks a conversation against itself.**
+
+There is no rulebook for *"you said Friday was a hard deadline, and you just accepted
+Monday."* That conflict only exists relative to what this conversation established
+twenty minutes earlier, which is why it needs memory rather than a policy engine.
+
+Hedged agreement is where the difference shows. *"Yeah... I guess."* can be caught
+acoustically — a pause, a filler, a wavering tone — and caught that way it means
+*this person sounds unsure right now*. Throughline catches it **semantically**, against a
+constraint stated at minute two, and that means something stronger: **the deal just
+changed and nobody said so.**
+
+## Where this bites: order and deal calls
+
+A delivery date, a quantity, a discount, payment terms. Terms move during a call, the
+call ends, and operations ships, invoices or quotes against a version nobody agreed to.
+The cost is ordinary and expensive: disputes, rework, chargebacks, re-quotes.
+
+No regulator is involved. Nothing was mis-sold. The deal simply stopped matching itself.
+
 ## The engineering claim
 
 **The LLM proposes. A deterministic engine decides.**
@@ -79,6 +104,11 @@ An LLM suggests that two statements might conflict. It does not get to raise an 
 **No citable evidence, no alert. The agent never invents the reason it intervened.**
 
 That bounds false positives and makes every alert inspectable. An agent that cries wolf is worse than no agent.
+
+**And an alert is never settled.** Diarization can reassign a speaker after an alert has
+fired. When that happens the gate re-runs, and an alert whose evidence no longer supports
+it is **withdrawn on screen** rather than left standing. Quietly misattributing a quote is
+the exact failure this project exists to prevent — shipping it would be indefensible.
 
 ### The measurement that matters
 

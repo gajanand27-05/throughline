@@ -292,3 +292,27 @@ The model had the context and lacked the *rule*.
 **Rationale.** The failure mode is consistent with the whole design: a weak proposer produces *missed* alerts, never false ones. Across every configuration tried — including the one that regressed — the clean control never once produced a false positive.
 
 **Consequences.** The demo page states these rates rather than showing a good run silently; publishing `contradiction 0/3` is evidence of discipline and matches the "misses, not false alarms" claim. The demo's events stay hand-authored, because regenerating from live extraction would silently drop the contradiction scenario, and the page says so plainly.
+
+## DR-026 — Field survey: reframe the pitch, name the vertical, restore CLARIFY
+
+**Context.** The full field was enumerated for the first time — **all 86 submissions**, after the live board proved to render only its top 10. **16 were read in full**, selected by overlap risk. Three earlier decisions rest on claims the field contradicts.
+
+**DR-005, DR-010 and DR-016 are deliberately NOT edited.** They were right on what was known at the time, and rewriting them would destroy the trail that makes them worth reading. This record supersedes the specific claims below.
+
+**1. Supersedes DR-005's "single strongest technical talking point."** Eight of the sixteen are built on citable or verifiable evidence — one mints an action credential only when *"every argument is grounded in a witness drawn from word-level transcript"*, returning `UNDECODABLE` rather than guessing; others use hash-chained tamper-evident records and append-only audits. **The gate stays exactly as built; only its role in the pitch changes** — it is the credibility layer, not the headline. What remains genuinely uncommon is **self-withdrawal**: an alert that retracts itself when attribution is revised (DR-022).
+
+**2. Supersedes DR-010's candidate vertical.** Two submissions already occupy regulated sales / consent, both listening to advisor↔customer calls with live diarization and real-time correction. Entering it means being third — the DR-004 mistake repeated.
+
+**New vertical: B2B order and deal negotiation** — where terms quietly change mid-call and operations then ships, invoices or quotes the wrong thing. Cost is concrete: disputes, rework, chargebacks.
+
+**It required zero rework, because it was already there.** Verified across all six fixtures: topics are `delivery_date`, `quantity`, `premium_plan`, `extended_warranty`, `bulk_discount`, `payment_terms`, `final_price`, `platform_choice`; the language is *"leave it off the quote"*, *"check what the warehouse can do"*, *"confirm the final price with my manager"*. The vertical was chosen implicitly on day one and only named now. Decisively, it involves **no regulation and no compliance rulebook** — which is exactly what separates it from both competitors.
+
+**3. Reverses DR-016 — CLARIFY returns.** DR-016 cut the spoken intervention, and was correct on the information available: the risk was schedule. The field survey is new information. In a *Voice Agent* hackathon **both closest competitors speak back**, while Throughline only listened and displayed — which risks reading as not a voice agent at all.
+
+CLARIFY returns **minimal**: when an alert fires the agent speaks one short line — *"Earlier, Friday was a hard deadline. Is Monday confirmed?"* — via browser `speechSynthesis`, built **after** realtime wiring. DR-016's scope discipline carries over: one line, no dialogue, no turn-taking, no second integration.
+
+**The reframed pitch.** Headline: *others check speech against a rulebook; Throughline checks a conversation against itself.* Credibility: every alert cites two real utterances and withdraws itself if attribution changes. Contrast: others catch hedged agreement by **prosody, in the moment**; we catch it **semantically, against something said twenty minutes earlier**.
+
+**Rationale.** Across all sixteen read, **nobody detects conflict between what a conversation established earlier and what it does later** — one competitor names that exact gap as its own stated limitation. Temporal memory is the differentiator; the gate is what makes it trustworthy.
+
+**Consequences.** README, deck and video lead with temporal memory, not the evidence gate. 61 drafts remain hidden, so this supports no whitespace claim — only that the lane was open among the 16 read.
