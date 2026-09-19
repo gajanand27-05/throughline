@@ -18,7 +18,7 @@ from extraction.schema import EVENT_SCHEMA, response_format
 
 ROOT = Path(__file__).resolve().parents[1]
 
-U = Utterance(4, "CUSTOMER", 107000, "Yeah... I guess.")
+U = Utterance(4, "B", 107000, "Yeah... I guess.")
 
 
 def test_engine_package_imports_nothing_networked():
@@ -54,7 +54,7 @@ def test_context_window_is_bounded():
 
 
 def test_prompt_marks_context_as_non_extractable():
-    turns = [Utterance(0, "AGENT", 1000, "When do you need it?")]
+    turns = [Utterance(0, "A", 1000, "When do you need it?")]
     content = build_messages(U, turns, ["delivery_date"])[1]["content"]
     assert "do NOT extract from these" in content
     assert "THIS utterance only" in content
@@ -86,7 +86,7 @@ def test_model_cannot_choose_where_evidence_points():
         U,
     )
     assert event.utterance_index == U.index == 4
-    assert event.speaker == U.speaker == "CUSTOMER"
+    assert event.speaker == U.speaker == "B"
     assert event.t_ms == U.t_ms == 107000
 
 

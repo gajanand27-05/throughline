@@ -47,7 +47,7 @@ def test_explicit_revision_is_not_a_contradiction():
 def test_disagreement_between_speakers_is_not_self_contradiction():
     """Two speakers holding opposite views is disagreement (DR-008)."""
     data, alerts = check("clean_control")
-    assert not any(a.speaker == "AGENT" for a in alerts)
+    assert not any(a.speaker == "A" for a in alerts)
 
 
 def test_drift_confidence_rises_with_ambiguous_acceptance():

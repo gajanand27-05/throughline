@@ -33,12 +33,12 @@ def _engine_selftest():
         return {"ok": False, "error": _engine_import_error}
     try:
         utterances = [
-            Utterance(0, "CUSTOMER", 18000, "Friday is a hard deadline."),
-            Utterance(1, "CUSTOMER", 107000, "Yeah... I guess."),
+            Utterance(0, "B", 18000, "Friday is a hard deadline."),
+            Utterance(1, "B", 107000, "Yeah... I guess."),
         ]
         events = [
-            Event(Kind.CONSTRAINT, "CUSTOMER", 0, 18000, "delivery_date", value="friday"),
-            Event(Kind.COMMITMENT, "CUSTOMER", 1, 107000, "delivery_date",
+            Event(Kind.CONSTRAINT, "B", 0, 18000, "delivery_date", value="friday"),
+            Event(Kind.COMMITMENT, "B", 1, 107000, "delivery_date",
                   value="monday", ambiguous=True),
         ]
         _, alerts = run(utterances, events)

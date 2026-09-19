@@ -3,14 +3,41 @@
   "mvp": false,
   "description": "POST-MVP (DR-009). Final price is explicitly deferred and then never returned to before the conversation ends. This is the only event type that fires at end-of-session rather than mid-conversation. Kept to prove the architecture; no detector is built.",
   "utterances": [
-    {"index": 0, "speaker": "CUSTOMER", "t_ms": 90000, "text": "What's the final number going to be?"},
-    {"index": 1, "speaker": "AGENT", "t_ms": 97000, "text": "Let me confirm the final price with my manager and come back to you on that."},
-    {"index": 2, "speaker": "CUSTOMER", "t_ms": 104000, "text": "Sure, fine."},
-    {"index": 3, "speaker": "AGENT", "t_ms": 512000, "text": "Great, I'll get the paperwork over this afternoon. Thanks for your time."}
+    {
+      "index": 0,
+      "speaker": "A",
+      "t_ms": 90000,
+      "text": "What's the final number going to be?"
+    },
+    {
+      "index": 1,
+      "speaker": "B",
+      "t_ms": 97000,
+      "text": "Let me confirm the final price with my manager and come back to you on that."
+    },
+    {
+      "index": 2,
+      "speaker": "A",
+      "t_ms": 104000,
+      "text": "Sure, fine."
+    },
+    {
+      "index": 3,
+      "speaker": "B",
+      "t_ms": 512000,
+      "text": "Great, I'll get the paperwork over this afternoon. Thanks for your time."
+    }
   ],
   "events": [
-    {"kind": "commitment", "speaker": "AGENT", "utterance_index": 1, "t_ms": 97000,
-     "topic": "final_price", "value": "deferred", "text": "will confirm final price later"}
+    {
+      "kind": "commitment",
+      "speaker": "B",
+      "utterance_index": 1,
+      "t_ms": 97000,
+      "topic": "final_price",
+      "value": "deferred",
+      "text": "will confirm final price later"
+    }
   ],
   "expected_alerts": []
 }
