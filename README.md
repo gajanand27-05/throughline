@@ -125,6 +125,24 @@ engine/
   evidence.py   the gate
 ```
 
+## Why it's built this way
+
+[`DECISIONS.md`](DECISIONS.md) is the decision trail — 23 numbered records covering
+the architecture, the scope cuts, and the things that turned out to be wrong.
+
+A few worth reading if you only read three:
+
+- **DR-005** — the evidence gate, and why the LLM is not the final authority.
+- **DR-015** — the LLM Gateway locked us out mid-build. The engine's purity meant
+  it blocked one half of the system instead of all of it.
+- **DR-022** — an alert that has already fired is not settled. Diarization can
+  reassign a speaker afterwards, so the gate re-runs and **withdraws its own
+  alert** rather than leaving a misattributed quote on screen.
+
+It includes the decisions that were reversed and the two bugs found while
+implementing DR-022, because a record that only keeps the choices that worked is
+marketing, not engineering.
+
 ## Scope
 
 MVP detects **two** event types — contradiction and commitment drift. Two more (decision conflict, unresolved critical item) have fixtures proving the architecture generalises, but no detectors. Detecting everything is how solo projects die.

@@ -12,8 +12,9 @@ from pathlib import Path
 import pytest
 
 from engine import (
-    PENDING, AlertStatus, Event, Memory, Revision, Utterance, alert_id, run, step,
+    MVP, PENDING, AlertStatus, Event, Memory, Revision, Utterance, alert_id, run, step,
 )
+from engine.conflicts import CROSS_SPEAKER, SAME_SPEAKER
 
 FIXTURE = Path(__file__).parent.parent / "fixtures" / "speaker_revision.json"
 
@@ -133,6 +134,52 @@ def test_full_fixture_matches_declared_expectations(data):
             assert got.status.value == want["status"], spec["why"]
             if "speaker" in want:
                 assert got.speaker == want["speaker"]
+
+
+# --- every detector declares its speaker rule (DR-023) ------------------------
+
+def test_speaker_rule_is_declared_for_every_detector():
+    """A new detector must choose. Silence is not a default."""
+    assert SAME_SPEAKER | CROSS_SPEAKER == frozenset(MVP)
+    assert not (SAME_SPEAKER & CROSS_SPEAKER)
+
+
+def test_commitment_drift_fires_across_speakers():
+    """One party overriding a constraint the other set is the higher-value case,
+    not a leak. Requiring a single speaker would discard it."""
+    utterances = [
+        Utterance(0, "B", 18000, "Friday is a hard deadline, Monday won't work."),
+        Utterance(1, "A", 95000, "We'll ship it Monday then."),
+    ]
+    events = [
+        Event.from_dict({"kind": "constraint", "speaker": "B", "utterance_index": 0,
+                         "t_ms": 18000, "topic": "delivery_date", "value": "friday"}),
+        Event.from_dict({"kind": "commitment", "speaker": "A", "utterance_index": 1,
+                         "t_ms": 95000, "topic": "delivery_date", "value": "monday"}),
+    ]
+    _, alerts = run(utterances, events)
+    assert len(alerts) == 1
+    assert alerts[0].event_type == "commitment_drift"
+    # Attributed to whoever moved, which is the agent here.
+    assert alerts[0].speaker == "A"
+    assert alerts[0].evidence_1.speaker == "B"
+
+
+def test_cross_speaker_drift_survives_a_revision():
+    """Relabelling must not withdraw an alert that never claimed one speaker."""
+    utterances = [
+        Utterance(0, "B", 18000, "Friday is a hard deadline, Monday won't work."),
+        Utterance(1, "A", 95000, "We'll ship it Monday then."),
+    ]
+    events = [
+        Event.from_dict({"kind": "constraint", "speaker": "B", "utterance_index": 0,
+                         "t_ms": 18000, "topic": "delivery_date", "value": "friday"}),
+        Event.from_dict({"kind": "commitment", "speaker": "A", "utterance_index": 1,
+                         "t_ms": 95000, "topic": "delivery_date", "value": "monday"}),
+    ]
+    _, alerts = run(utterances, events + [Revision.of({1: "C"})])
+    assert alerts[0].status is AlertStatus.UPDATED
+    assert alerts[0].speaker == "C"
 
 
 # --- PENDING is inadmissible --------------------------------------------------

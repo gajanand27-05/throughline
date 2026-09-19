@@ -17,6 +17,18 @@ POST_MVP = ("decision_conflict", "unresolved_item")
 #: people disagreeing, which is normal conversation.
 SAME_SPEAKER = frozenset({"contradiction"})
 
+#: Event types that are deliberately NOT same-speaker (DR-023). Commitment drift
+#: across speakers is the higher-value case, not a leak: one party quietly
+#: overriding a constraint the other party set is the whole point. "Friday is a
+#: hard deadline" (B) ... "We'll ship Monday" (A) is a real drift, and requiring
+#: one speaker would discard it.
+CROSS_SPEAKER = frozenset({"commitment_drift"})
+
+# Every detector must declare which it is. A new detector that forgets to
+# choose fails test_speaker_rule_is_declared_for_every_detector rather than
+# silently inheriting whichever behaviour the code happens to have.
+assert SAME_SPEAKER | CROSS_SPEAKER == frozenset(MVP)
+
 
 def revalidate(alert, utterances):
     """Re-run the gate on an existing alert against a relabelled transcript.
