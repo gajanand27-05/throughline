@@ -4,6 +4,8 @@
       "name": "commitment_drift",
       "title": "Commitment drift",
       "blurb": "A hard constraint set at 00:18 quietly becomes a hedged yes to the opposite at 01:47.",
+      "live_kind": "ok",
+      "live_note": "Live extraction reproduces this end-to-end, 3/3 runs.",
       "utterances": [
         {
           "index": 0,
@@ -77,6 +79,8 @@
       "name": "contradiction",
       "title": "Contradiction",
       "blurb": "A position stated in minute one is reversed twenty minutes later, with no acknowledgement that anything changed.",
+      "live_kind": "miss",
+      "live_note": "Engine behaviour on hand-authored events. Live extraction currently misses this case (0/3) \u2014 see DR-025.",
       "utterances": [
         {
           "index": 0,
@@ -144,6 +148,8 @@
       "name": "clean_control",
       "title": "Clean control",
       "blurb": "A healthy conversation loaded with near-misses a naive detector fires on. Correct output is nothing at all.",
+      "live_kind": "ok",
+      "live_note": "Live extraction also stays silent here \u2014 zero alerts, 3/3 runs.",
       "utterances": [
         {
           "index": 0,

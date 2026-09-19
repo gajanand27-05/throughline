@@ -80,6 +80,29 @@ An LLM suggests that two statements might conflict. It does not get to raise an 
 
 That bounds false positives and makes every alert inspectable. An agent that cries wolf is worse than no agent.
 
+### The measurement that matters
+
+Live extraction was run against every fixture, in four different prompt
+configurations — including one that was actively broken and regressed the
+flagship case.
+
+**The clean control produced zero false positives in every single configuration.**
+
+`clean_control` is a healthy conversation deliberately loaded with the near-misses
+a naive detector fires on: an openly changed mind, two speakers disagreeing, a
+restated commitment, different topics carrying different values. Correct output
+is nothing at all — and it stayed nothing even while the extractor feeding it was
+misbehaving.
+
+That is the design working as intended. The model is a proposer, and a weak
+proposer yields **missed alerts, never false ones**. Measured over 3 runs:
+commitment drift fired 3/3, the clean control stayed silent 3/3, contradiction
+missed 0/3. All three rates are published, including the one that fails —
+see [DR-024 and DR-025](DECISIONS.md).
+
+The same principle applies upstream in the extraction prompt, where topics must
+not be merged: *a missed conflict costs one alert, a merged topic costs trust.*
+
 ## Run the engine
 
 No API key, no network, no audio:

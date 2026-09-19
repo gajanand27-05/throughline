@@ -41,7 +41,15 @@
     background: transparent; color: var(--muted);
   }
   .tab[aria-selected="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); }
-  .blurb { color: var(--muted); font-size: .9rem; margin: 0 0 1rem; min-height: 2.6em; }
+  .blurb { color: var(--muted); font-size: .9rem; margin: 0 0 .5rem; min-height: 2.6em; }
+  /* The limitation belongs on the tab, not in the footer — nobody reads footers. */
+  .live {
+    font-size: .8rem; margin: 0 0 1rem; padding: .4rem .65rem;
+    border-radius: 6px; border: 1px solid var(--line);
+  }
+  .live.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 35%, transparent); }
+  .live.miss { color: var(--alert); border-color: color-mix(in srgb, var(--alert) 40%, transparent); }
+  .live a { color: inherit; }
 
   .controls { display: flex; align-items: center; gap: .75rem; margin-bottom: 1.1rem; }
   .play {
@@ -169,6 +177,7 @@
 
     <div class="tabs" id="tabs" role="tablist"></div>
     <p class="blurb" id="blurb"></p>
+    <p class="live" id="live"></p>
 
     <div class="controls">
       <button class="play" id="play">▶ Play conversation</button>
@@ -225,6 +234,11 @@ const $ = id => document.getElementById(id);
 function render() {
   const sc = scenarios[current];
   $("blurb").textContent = sc.blurb;
+  const liveNote = $("live");
+  liveNote.className = "live " + (sc.live_kind || "");
+  liveNote.innerHTML = escapeHTML(sc.live_note || "").replace(
+    "DR-025",
+    '<a href="https://github.com/gajanand27-05/throughline/blob/main/DECISIONS.md">DR-025</a>');
 
   const shown = new Set(sc.utterances.slice(0, cursor + 1).map(u => u.index));
   const live = sc.alerts.filter(a => shown.has(a.fires_at));

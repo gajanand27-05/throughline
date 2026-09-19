@@ -30,6 +30,19 @@ TITLES = {
     "clean_control": "Clean control",
 }
 
+# How live extraction actually performs on each scenario, measured over 3 runs
+# (DR-025). Shown on the tab itself: a judge reads the tab, not the footer, and
+# the contradiction case is precisely where they would otherwise assume it works.
+LIVE = {
+    "commitment_drift": ("ok",
+        "Live extraction reproduces this end-to-end, 3/3 runs."),
+    "contradiction": ("miss",
+        "Engine behaviour on hand-authored events. Live extraction currently "
+        "misses this case (0/3) — see DR-025."),
+    "clean_control": ("ok",
+        "Live extraction also stays silent here — zero alerts, 3/3 runs."),
+}
+
 BLURBS = {
     "commitment_drift": "A hard constraint set at 00:18 quietly becomes a hedged "
                         "yes to the opposite at 01:47.",
@@ -58,10 +71,13 @@ def build(name):
     if unknown:
         raise SystemExit(f"{name}: page cannot render alert status {unknown}")
 
+    live_kind, live_note = LIVE[name]
     return {
         "name": name,
         "title": TITLES[name],
         "blurb": BLURBS[name],
+        "live_kind": live_kind,
+        "live_note": live_note,
         "utterances": [
             {"index": u.index, "speaker": u.speaker, "t_ms": u.t_ms, "text": u.text}
             for u in utterances
