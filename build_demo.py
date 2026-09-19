@@ -52,6 +52,11 @@ def build(name):
             f"{name}: engine produced {len(alerts)} alert(s), fixture expects "
             f"{expected}. Refusing to write a demo that misrepresents the engine."
         )
+    # The page renders whatever status the engine emits; anything it cannot
+    # render must not reach it silently.
+    unknown = {a.status.value for a in alerts} - {"active", "withdrawn", "updated"}
+    if unknown:
+        raise SystemExit(f"{name}: page cannot render alert status {unknown}")
 
     return {
         "name": name,

@@ -50,6 +50,8 @@
       ],
       "alerts": [
         {
+          "id": "9dfcb5b0b8a7",
+          "status": "active",
           "event_type": "commitment_drift",
           "speaker": "B",
           "t_ms": 107000,
@@ -115,6 +117,8 @@
       ],
       "alerts": [
         {
+          "id": "80502e0f9107",
+          "status": "active",
           "event_type": "contradiction",
           "speaker": "B",
           "t_ms": 1208000,

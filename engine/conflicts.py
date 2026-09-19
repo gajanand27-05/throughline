@@ -11,6 +11,37 @@ from .models import Event, Kind, Utterance
 MVP = ("contradiction", "commitment_drift")
 POST_MVP = ("decision_conflict", "unresolved_item")
 
+#: Event types whose claim only holds if both cited utterances are the same
+#: speaker. Contradiction means "you reversed yourself" - if diarization later
+#: splits those two turns across two people, there is no contradiction, just two
+#: people disagreeing, which is normal conversation.
+SAME_SPEAKER = frozenset({"contradiction"})
+
+
+def revalidate(alert, utterances):
+    """Re-run the gate on an existing alert against a relabelled transcript.
+
+    Returns a fresh Alert (same id, current speakers) if the alert still stands,
+    or None if it must be withdrawn. This is DR-005 applied over time: evidence
+    that stops supporting the claim stops being an alert.
+    """
+    by_index = {u.index: u for u in utterances}
+    earlier = by_index.get(alert.evidence_1.utterance_index)
+    later = by_index.get(alert.evidence_2.utterance_index)
+    if earlier is None or later is None:
+        return None
+    if alert.event_type in SAME_SPEAKER and earlier.speaker != later.speaker:
+        return None
+    return gate(
+        event_type=alert.event_type,
+        speaker=later.speaker,
+        earlier_index=earlier.index,
+        later_index=later.index,
+        confidence=alert.confidence,
+        summary=alert.summary,
+        utterances=utterances,
+    )
+
 
 def detect(memory: Memory, event: Event, utterances: list[Utterance]) -> list:
     """Run the MVP detectors against one newly extracted event.

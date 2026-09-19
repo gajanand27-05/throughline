@@ -22,6 +22,21 @@ class Status(str, Enum):
     RESOLVED = "resolved"
 
 
+class AlertStatus(str, Enum):
+    """An alert's lifecycle (DR-022). Withdrawn alerts are kept, never deleted,
+    so the UI can show a visible correction rather than a silent disappearance."""
+
+    ACTIVE = "active"
+    WITHDRAWN = "withdrawn"
+    UPDATED = "updated"
+
+
+#: Diarization's interim label before it commits to a speaker. Evidence resting
+#: on an unresolved speaker is inadmissible (DR-018) - a conflict cannot be
+#: attributed to nobody.
+PENDING = "PENDING"
+
+
 @dataclass(frozen=True)
 class Utterance:
     """One speaker-attributed turn from the transcript."""
@@ -95,6 +110,28 @@ class EvidenceRef:
 
 
 @dataclass(frozen=True)
+class Revision:
+    """A `SpeakerRevision` from the transcript layer: diarization changed its mind.
+
+    Fed through `step()` like any other input (DR-022) so revision handling stays
+    inside the reducer instead of becoming a second control path.
+    """
+
+    relabels: tuple  # ((utterance_index, new_speaker), ...)
+
+    @staticmethod
+    def of(mapping):
+        return Revision(tuple(sorted((int(k), v) for k, v in dict(mapping).items())))
+
+    @staticmethod
+    def from_dict(d):
+        return Revision.of(d["relabels"])
+
+    def as_map(self):
+        return dict(self.relabels)
+
+
+@dataclass(frozen=True)
 class Alert:
     event_type: str
     speaker: str
@@ -103,9 +140,14 @@ class Alert:
     evidence_2: EvidenceRef
     confidence: float
     summary: str
+    #: Derived from the evidence, never assigned (DR-022). Set by `evidence.explain`.
+    id: str = ""
+    status: AlertStatus = AlertStatus.ACTIVE
 
     def to_dict(self):
         return {
+            "id": self.id,
+            "status": self.status.value,
             "event_type": self.event_type,
             "speaker": self.speaker,
             "t_ms": self.t_ms,

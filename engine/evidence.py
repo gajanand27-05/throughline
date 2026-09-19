@@ -7,11 +7,27 @@ distinct, correctly-ordered utterances in the actual transcript.
 No citable evidence, no alert. The agent never invents the reason it intervened.
 """
 
-from .models import Alert, EvidenceRef, Utterance
+import hashlib
+
+from .models import PENDING, Alert, EvidenceRef, Utterance
 
 
 class EvidenceError(Exception):
     """Raised only by `explain`; `gate` returns None instead."""
+
+
+def alert_id(event_type: str, earlier_index: int, later_index: int) -> str:
+    """Identity derived from the evidence, not assigned (DR-022).
+
+    An alert *is* its evidence, so the same evidence pair is the same alert.
+    That gives free deduplication and, because nothing here depends on a counter
+    or a clock, replay produces identical ids on every run.
+
+    `hashlib`, not the builtin `hash()`: Python salts string hashing per process,
+    which would silently break that determinism across runs.
+    """
+    key = f"{event_type}|{earlier_index}|{later_index}".encode()
+    return hashlib.sha256(key).hexdigest()[:12]
 
 
 def gate(
@@ -61,6 +77,8 @@ def explain(
         raise EvidenceError("evidence is not in chronological order")
     if not earlier.text.strip() or not later.text.strip():
         raise EvidenceError("evidence utterance is empty")
+    if PENDING in (earlier.speaker, later.speaker):
+        raise EvidenceError("evidence speaker is unresolved (PENDING)")
 
     return Alert(
         event_type=event_type,
@@ -70,4 +88,5 @@ def explain(
         evidence_2=EvidenceRef.of(later),
         confidence=round(confidence, 2),
         summary=summary,
+        id=alert_id(event_type, earlier_index, later_index),
     )

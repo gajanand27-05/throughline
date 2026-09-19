@@ -95,6 +95,14 @@
     font-size: .74rem; letter-spacing: .1em; text-transform: uppercase;
     color: var(--alert); margin: 0 0 .7rem; font-weight: 700;
   }
+  /* Withdrawn: struck through and drained of colour, but still on screen. */
+  .alert.withdrawn { border-color: var(--line); opacity: .78; }
+  .alert.withdrawn h2 { color: var(--muted); text-decoration: line-through; }
+  .alert.withdrawn .ev .txt { text-decoration: line-through; opacity: .7; }
+  .alert.withdrawn .verified { color: var(--muted); text-decoration: line-through; }
+  .alert.updated { border-color: var(--ok); }
+  .alert.updated h2 { color: var(--ok); }
+  .note.status { color: var(--muted); font-style: italic; }
   .note {
     font-size: .85rem; color: var(--fg); margin: 0 0 .75rem;
     padding-bottom: .6rem; border-bottom: 1px solid var(--line);
@@ -278,15 +286,28 @@ function contextFor(a, sc) {
   return prev;
 }
 
+// An alert whose evidence stopped supporting it is shown withdrawn, never
+// deleted (DR-022). A visible correction is honest; a silent disappearance
+// would be the misattribution this project exists to prevent.
+const STATUS_NOTE = {
+  withdrawn: "Withdrawn — speaker attribution was revised and the evidence no " +
+             "longer supports this alert.",
+  updated: "Attribution revised. The evidence still holds under the corrected " +
+           "speaker labels.",
+};
+
 function alertHTML(a, sc) {
+  const status = a.status || "active";
   const row = (lab, e, cls = "") => `
     <div class="ev ${cls}" data-goto="u${e.utterance_index ?? e.index}" title="Jump to this turn">
       <span class="lab">${lab}<br><em style="font-weight:400">${mmss(e.t_ms)}</em></span>
       <span class="txt"><em>${e.speaker}:</em> “${escapeHTML(e.text)}”</span>
     </div>`;
   const ctx = contextFor(a, sc);
-  return `<div class="alert">
-      <h2>${a.event_type.replace(/_/g, " ")} — ${a.speaker}</h2>
+  return `<div class="alert ${status}" data-alert="${a.id || ""}">
+      <h2>${a.event_type.replace(/_/g, " ")} — ${a.speaker}${
+        status !== "active" ? ` · ${status}` : ""}</h2>
+      ${STATUS_NOTE[status] ? `<p class="note status">${STATUS_NOTE[status]}</p>` : ""}
       ${NOTES[a.event_type] ? `<p class="note">${NOTES[a.event_type]}</p>` : ""}
       ${row("Earlier", a.evidence_1)}
       ${ctx ? row("in reply to", ctx, "ctx") : ""}

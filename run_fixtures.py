@@ -9,7 +9,7 @@ import json
 import sys
 from pathlib import Path
 
-from engine import POST_MVP, Event, Utterance, run
+from engine import POST_MVP, AlertStatus, Event, Revision, Utterance, run
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -36,7 +36,29 @@ def check(path):
         if got.confidence < want["min_confidence"]:
             return "FAIL", f"confidence {got.confidence} < {want['min_confidence']}", alerts
 
+    # Replay each declared revision in order and check the stated outcome
+    # (DR-022). A fixture that fires an alert but never re-checks it would let
+    # the exact misattribution this project claims to prevent pass silently.
+    items = list(events)
+    for spec in data.get("revisions", []):
+        items.append(Revision.from_dict(spec))
+        _, alerts = run(utterances, items)
+        for want in spec["expect"]:
+            match = [a for a in alerts
+                     if [a.evidence_1.utterance_index,
+                         a.evidence_2.utterance_index] == want["evidence_indices"]]
+            if not match:
+                return "FAIL", f"revision target {want['evidence_indices']} vanished", alerts
+            if match[0].status.value != want["status"]:
+                return ("FAIL",
+                        f"after revision {spec['relabels']}: "
+                        f"{match[0].status.value} != {want['status']}", alerts)
+
+    revs = len(data.get("revisions", []))
     note = "0 alerts" if not expected else f"{len(alerts)} alert(s)"
+    if revs:
+        live = sum(1 for a in alerts if a.status is not AlertStatus.WITHDRAWN)
+        note = f"{len(alerts)} alert(s), {revs} revision(s) -> {live} still standing"
     return "PASS", note, alerts
 
 
@@ -51,7 +73,8 @@ def main():
     width = max(len(n) for n, _, _ in results)
     print(f"\n{len(paths)} fixtures processed\n")
     for name, status, note in results:
-        suffix = f" - {note}" if status != "PASS" or "0 alerts" in note else ""
+        show = status != "PASS" or "0 alerts" in note or "revision" in note
+        suffix = f" - {note}" if show else ""
         print(f"  {name:<{width}}  {status}{suffix}")
 
     control = dict((n, s) for n, s, _ in results).get("clean_control")
