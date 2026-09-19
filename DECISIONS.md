@@ -233,3 +233,36 @@ the curated decision trail.
 Nobody contradicted themselves; one party quietly overrode a constraint the other set. Contradiction is different because its claim is specifically *"you reversed yourself"* — which evaporates the moment the two turns belong to different people. The alert is attributed to whoever moved, which is what makes it actionable.
 
 **Consequences.** A cross-speaker drift alert survives a revision, updated rather than withdrawn, because it never claimed one speaker. The partition assertion means **any new detector must declare its rule or fail the test suite** — silence is not a default, which is exactly the gap that let this stay implicit.
+
+## DR-024 — Live extraction measured: the gate holds, the extractor does not
+
+**Context.** Until this point every passing test used hand-authored events. This is the first end-to-end measurement of the whole claim: real model output, through the evidence gate, to the right alerts.
+
+**What gateway access actually meant.** Of 37 catalogued models, **exactly one was reachable**, and it does not support structured output. So the prompt-JSON + local-validation path from DR-017 was implemented not as a provider-switch contingency but because it was the only way to run extraction at all.
+
+**Measured**
+
+| Metric | Result |
+|---|---|
+| Model | 4B parameters, no structured output |
+| Schema validity | **9/10 proposals validated (90%)**, 1 rejected locally |
+| Latency, clean | **p50 ≈ 0.9–1.1 s** — comfortably inside the serverless limit |
+| Rate limiting | **3–4 × HTTP 429 per short conversation** |
+| Clean control | **PASS — zero alerts, zero false positives** |
+| Commitment drift | **FAIL — no alert at all** |
+| Contradiction | **FAIL — right type, wrong evidence pair** |
+
+A measurement bug surfaced and was fixed: elapsed time spanned the retry loop, so backoff sleeps were being reported as model latency (an apparent p50 of 58 s). Restarting the clock per attempt exposed the true ~1 s figure. **The apparent latency problem was a rate-limit problem wearing a costume.**
+
+**Diagnosed.** `"Yeah... I guess."` extracted **zero events** — the model did not recognise hedged acceptance as a commitment, and that single utterance is the entire flagship demo. Topic identifiers also drift between utterances, and the engine's collision detection depends on two statements sharing a topic string.
+
+**Decision.** Record the results; do not paper over them. Extraction quality becomes the binding constraint and gets its own decision rather than a reflex fix.
+
+**Rationale.** The result splits cleanly, and the split is the whole point:
+
+- **The architecture held.** Local validation caught malformed output, latency was fine, and above all **the clean control produced zero alerts from real model output.** The false-positive guard survived contact with a weak model — the property DR-005 exists to protect.
+- **The extractor did not.** A small model cannot reliably produce the proposals the engine needs.
+
+This is the failure split the design was built for. The model is a proposer; a weak proposer yields *missed* alerts, not false ones. "Bias toward missing rather than false-alarming" stopped being a slogan and started being a measurement.
+
+**Consequences.** The demo cannot currently run on live extraction, so replay with precomputed extraction becomes load-bearing rather than merely prudent. Rate limiting, not latency, is the real constraint on the token endpoint's design. Topic identity needs anchoring.

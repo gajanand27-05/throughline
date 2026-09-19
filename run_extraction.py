@@ -67,12 +67,19 @@ def one_pass(fixture, model):
     memory, alerts, timings = Memory(), [], []
     per_utterance, known_topics, seen = [], set(), []
 
+    proposed = valid = tokens = 0
+    rejections = []
+
     for utterance in utterances:
-        events, elapsed = extract(
+        events, elapsed, meta = extract(
             utterance, context_turns=seen, known_topics=known_topics, model=model
         )
         timings.append(elapsed)
         per_utterance.append(signature(events))
+        proposed += meta["proposed"]
+        valid += meta["valid"]
+        tokens += meta["tokens"]
+        rejections.extend(meta["rejected"])
         for event in events:
             known_topics.add(event.topic)
             _, new_alerts = step(memory, event, utterances)
@@ -84,6 +91,10 @@ def one_pass(fixture, model):
         "timings": timings,
         "signatures": per_utterance,
         "event_count": sum(len(s) for s in per_utterance),
+        "proposed": proposed,
+        "valid": valid,
+        "tokens": tokens,
+        "rejections": rejections,
     }
 
 
@@ -120,6 +131,8 @@ def evaluate(name, fixture, runs, model):
         per_utterance_agreement.append(counts.most_common(1)[0][1] / len(results))
 
     timings = [t for r in results for t in r["timings"]]
+    proposed = sum(r["proposed"] for r in results)
+    valid = sum(r["valid"] for r in results)
     return {
         "name": name,
         "runs": len(results),
@@ -131,6 +144,11 @@ def evaluate(name, fixture, runs, model):
         "p50_ms": round(statistics.median(timings) * 1000),
         "max_ms": round(max(timings) * 1000),
         "worst_conversation_s": round(max(sum(r["timings"]) for r in results), 1),
+        "proposed": proposed,
+        "valid": valid,
+        "schema_validity": (valid / proposed) if proposed else 1.0,
+        "tokens": sum(r["tokens"] for r in results),
+        "rejections": [x for r in results for x in r["rejections"]],
         "errors": errors,
         "sample_alerts": [a.to_dict() for a in results[0]["alerts"]],
     }
@@ -167,15 +185,30 @@ def main():
                 print(f"      {err}")
         return 1
 
-    header = f"  {'fixture':<18}{'end-to-end':<13}{'identical':<12}{'min agree':<12}{'p50':<9}{'max'}"
+    header = (f"  {'fixture':<18}{'end-to-end':<13}{'identical':<12}{'min agree':<12}"
+              f"{'schema':<10}{'p50':<10}{'max'}")
     print(header)
     print("  " + "-" * (len(header) - 2))
     for r in reports:
         e2e = f"{r['end_to_end_correct']}/{r['runs']}"
         idn = f"{r['identical_runs']}/{r['runs']}"
         agree = f"{r['min_utterance_agreement']:.0%}"
-        print(f"  {r['name']:<18}{e2e:<13}{idn:<12}{agree:<12}"
-              f"{r['p50_ms']}ms{'':<4}{r['max_ms']}ms")
+        sch = f"{r['valid']}/{r['proposed']}"
+        print(f"  {r['name']:<18}{e2e:<13}{idn:<12}{agree:<12}{sch:<10}"
+              f"{str(r['p50_ms'])+'ms':<10}{r['max_ms']}ms")
+
+    tokens = sum(r["tokens"] for r in reports)
+    prop = sum(r["proposed"] for r in reports)
+    val = sum(r["valid"] for r in reports)
+    print(f"\n  Schema validity: {val}/{prop} proposals validated"
+          f"{'' if not prop else f' ({val/prop:.0%})'}"
+          f"  ·  tokens used: {tokens:,}")
+    rej = [x for r in reports for x in r["rejections"]]
+    if rej:
+        from collections import Counter as _C
+        print(f"  Rejected {len(rej)}: " + "; ".join(
+            f"{n}x {reason}" for reason, n in _C(
+                x.split("] ", 1)[-1] for x in rej).most_common(4)))
 
     control = next((r for r in reports if r["name"] == "clean_control"), None)
     if control:

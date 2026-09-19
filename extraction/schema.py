@@ -105,3 +105,68 @@ def response_format():
             "schema": EVENT_SCHEMA,
         },
     }
+
+
+# --- prompt-JSON fallback (DR-017) -------------------------------------------
+#
+# Not every model on the gateway accepts `response_format`. When one does not,
+# the schema moves into the prompt and validation moves here. That is a higher
+# rejection rate, not a correctness hole: a malformed proposal is dropped before
+# it reaches the engine, and the evidence gate - not the model - is what makes an
+# alert true (DR-005).
+
+ITEM = EVENT_SCHEMA["properties"]["events"]["items"]
+REQUIRED = tuple(ITEM["required"])
+BOOLS = ("polarity", "ambiguous", "explicit_revision")
+
+
+def json_instructions():
+    """Schema restated as prompt text, for models without structured output."""
+    return (
+        'Reply with JSON only. No prose, no markdown fence. Shape:\n'
+        '{"events": [{"kind": <one of: ' + ", ".join(KINDS) + '>, '
+        '"topic": <snake_case subject>, "value": <string or null>, '
+        '"polarity": <true|false>, "ambiguous": <true|false>, '
+        '"explicit_revision": <true|false>, "text": <short paraphrase>}]}\n'
+        'Use {"events": []} when the utterance establishes nothing.'
+    )
+
+
+def validate_events(raw):
+    """Split proposals into (valid, rejections). Never raises on bad model output.
+
+    Deliberately strict: a proposal that cannot be trusted is dropped rather
+    than coerced. Guessing at what the model meant is how a false alert gets
+    manufactured out of a typo.
+    """
+    valid, rejected = [], []
+    if not isinstance(raw, list):
+        return [], [f"events was {type(raw).__name__}, expected list"]
+
+    for i, item in enumerate(raw):
+        if not isinstance(item, dict):
+            rejected.append(f"[{i}] not an object")
+            continue
+        missing = [k for k in REQUIRED if k not in item]
+        if missing:
+            rejected.append(f"[{i}] missing {','.join(missing)}")
+            continue
+        if item.get("kind") not in KINDS:
+            rejected.append(f"[{i}] bad kind {item.get('kind')!r}")
+            continue
+        if not str(item.get("topic") or "").strip():
+            rejected.append(f"[{i}] empty topic")
+            continue
+        bad = [k for k in BOOLS if not isinstance(item.get(k), bool)]
+        if bad:
+            rejected.append(f"[{i}] non-boolean {','.join(bad)}")
+            continue
+        if item.get("value") is not None and not isinstance(item["value"], str):
+            rejected.append(f"[{i}] value is {type(item['value']).__name__}")
+            continue
+        extra = set(item) - set(ITEM["properties"])
+        if extra:
+            rejected.append(f"[{i}] unexpected {','.join(sorted(extra))}")
+            continue
+        valid.append(item)
+    return valid, rejected
