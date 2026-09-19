@@ -3,66 +3,317 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Throughline</title>
+<title>Throughline — what changed?</title>
 <style>
-  :root { color-scheme: light dark; }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; min-height: 100vh; display: grid; place-items: center;
-    font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-    background: #fbfbfa; color: #1a1a19; padding: 2rem;
+  :root {
+    color-scheme: light dark;
+    --bg: #fbfbfa; --fg: #1a1a19; --muted: #6b6b66; --line: #e2e1dc;
+    --card: #ffffff; --alert: #c0392b; --alert-bg: #fdf3f2; --ok: #2d7a4f;
+    --accent: #1a1a19;
   }
   @media (prefers-color-scheme: dark) {
-    body { background: #131313; color: #e8e8e6; }
+    :root {
+      --bg: #131313; --fg: #e8e8e6; --muted: #8b8b85; --line: #2a2a28;
+      --card: #1a1a19; --alert: #e8705f; --alert-bg: #2a1a18; --ok: #6fbf8f;
+      --accent: #e8e8e6;
+    }
   }
-  main { max-width: 34rem; }
-  h1 { font-size: 1.5rem; letter-spacing: -0.02em; margin: 0 0 .25rem; }
-  .q { font-size: 1.05rem; opacity: .75; margin: 0 0 1.75rem; }
-  .q b { font-weight: 600; opacity: 1; }
-  .status {
-    border: 1px solid color-mix(in srgb, currentColor 15%, transparent);
-    border-radius: 10px; padding: 1rem 1.15rem; font-size: .9rem;
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg); padding: 2rem 1.25rem 4rem;
+    font: 15px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   }
-  .status h2 {
-    font-size: .72rem; text-transform: uppercase; letter-spacing: .09em;
-    opacity: .55; margin: 0 0 .6rem; font-weight: 600;
+  main { max-width: 46rem; margin: 0 auto; }
+  header { margin-bottom: 1.75rem; }
+  h1 { font-size: 1.45rem; letter-spacing: -0.02em; margin: 0 0 .2rem; }
+  .q { color: var(--muted); margin: 0 0 1.25rem; font-size: 1rem; }
+  .q b { color: var(--fg); font-weight: 600; }
+
+  .tabs { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: .9rem; }
+  .tab {
+    font: inherit; font-size: .85rem; cursor: pointer; padding: .4rem .8rem;
+    border: 1px solid var(--line); border-radius: 999px;
+    background: transparent; color: var(--muted);
   }
-  ul { margin: 0; padding: 0; list-style: none; }
-  li { display: flex; gap: .6rem; padding: .18rem 0; }
-  li span:first-child { width: 1.1rem; flex: none; }
-  .pending { opacity: .5; }
+  .tab[aria-selected="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .blurb { color: var(--muted); font-size: .9rem; margin: 0 0 1rem; min-height: 2.6em; }
+
+  .controls { display: flex; align-items: center; gap: .75rem; margin-bottom: 1.1rem; }
+  .play {
+    font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer;
+    padding: .45rem 1rem; border-radius: 7px; border: 1px solid var(--accent);
+    background: var(--accent); color: var(--bg);
+  }
+  .clock {
+    font: .82rem ui-monospace, "Cascadia Code", Consolas, monospace;
+    color: var(--muted); letter-spacing: .04em;
+  }
+  .verdict { margin-left: auto; font-size: .82rem; font-weight: 600; }
+  .verdict.clean { color: var(--ok); }
+  .verdict.fired { color: var(--alert); }
+
+  .turn {
+    display: grid; grid-template-columns: 3.6rem 1fr; gap: .9rem;
+    padding: .5rem 0; border-top: 1px solid var(--line);
+  }
+  .turn:first-child { border-top: none; }
+  .turn.hidden { display: none; }
+  .turn.cited { background: var(--alert-bg); border-radius: 7px; padding: .5rem .6rem; }
+  .turn.flash { animation: flash 1.1s ease-out; }
+  @keyframes flash { from { background: var(--alert-bg); } to { background: transparent; } }
+  .t {
+    font: .78rem ui-monospace, "Cascadia Code", Consolas, monospace;
+    color: var(--muted); padding-top: .18rem;
+  }
+  .spk {
+    font-size: .68rem; font-weight: 700; letter-spacing: .09em;
+    color: var(--muted); display: block; margin-bottom: .1rem;
+  }
+
+  .alert {
+    border: 1px solid var(--alert); border-left-width: 3px; border-radius: 9px;
+    background: var(--card); padding: .9rem 1rem; margin: .8rem 0;
+  }
+  .alert h2 {
+    font-size: .74rem; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--alert); margin: 0 0 .7rem; font-weight: 700;
+  }
+  .note {
+    font-size: .85rem; color: var(--fg); margin: 0 0 .75rem;
+    padding-bottom: .6rem; border-bottom: 1px solid var(--line);
+  }
+  .ev {
+    display: grid; grid-template-columns: 4.6rem 1fr; gap: .7rem;
+    font-size: .88rem; padding: .3rem 0; cursor: pointer; border-radius: 5px;
+  }
+  .ev:hover { background: var(--alert-bg); }
+  .ev .lab { color: var(--muted); font-size: .76rem; font-weight: 600; padding-top: .1rem; }
+  .ev .txt em { font-style: normal; color: var(--muted); }
+  /* Context is NOT evidence. It must never look like evidence (DR-005). */
+  .ev.ctx { cursor: pointer; opacity: .72; }
+  .ev.ctx .txt { font-style: italic; }
+  .ev.ctx .lab { font-weight: 400; text-transform: none; }
+  .meta {
+    display: flex; gap: .9rem; flex-wrap: wrap; align-items: baseline;
+    margin-top: .75rem; padding-top: .7rem; border-top: 1px solid var(--line);
+    font-size: .8rem; color: var(--muted);
+  }
+  .verified { color: var(--ok); font-weight: 600; }
+  .conf { font-size: .74rem; opacity: .65; }
+  .gap {
+    display: grid; grid-template-columns: 3.6rem 1fr; gap: .9rem;
+    padding: .35rem 0; font-size: .76rem; color: var(--muted);
+    border-top: 1px dashed var(--line);
+  }
+  .gap.hidden { display: none; }
+  .gap span:last-child { letter-spacing: .06em; }
+  .btns { margin-left: auto; display: flex; gap: .45rem; }
+  .btn {
+    font: inherit; font-size: .78rem; font-weight: 600; padding: .32rem .8rem;
+    border-radius: 6px; border: 1px solid var(--line);
+    background: transparent; color: var(--muted); cursor: not-allowed;
+  }
+  .btn[title] { cursor: help; }
+
+  .empty {
+    border: 1px dashed var(--line); border-radius: 9px; padding: 1rem;
+    color: var(--ok); font-size: .88rem; text-align: center;
+  }
+  footer {
+    margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line);
+    font-size: .8rem; color: var(--muted);
+  }
   code {
-    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
-    font-size: .85em;
-    background: color-mix(in srgb, currentColor 8%, transparent);
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: .85em;
+    background: color-mix(in srgb, currentColor 9%, transparent);
     padding: .1em .35em; border-radius: 4px;
   }
-  footer { margin-top: 1.5rem; font-size: .82rem; opacity: .55; }
   a { color: inherit; }
 </style>
 </head>
 <body>
 <main>
-  <h1>Throughline</h1>
-  <p class="q">Not <i>“what was said?”</i> &mdash; <b>“what changed?”</b></p>
+  <header>
+    <h1>Throughline</h1>
+    <p class="q">Not <i>“what was said?”</i> — <b>“what changed?”</b></p>
 
-  <div class="status">
-    <h2>Build status</h2>
-    <ul>
-      <li><span>✅</span><span>Integrity engine &mdash; memory, detectors, evidence gate (32 tests)</span></li>
-      <li class="pending"><span>⬜</span><span>LLM extraction: utterances &rarr; claims and commitments</span></li>
-      <li class="pending"><span>⬜</span><span>Live transcript and alert view</span></li>
-      <li class="pending"><span>⬜</span><span>AssemblyAI realtime streaming + speaker attribution</span></li>
-      <li class="pending"><span>⬜</span><span>Replay mode</span></li>
-      <li class="pending"><span>⬜</span><span>CLARIFY intervention</span></li>
-    </ul>
-  </div>
+    <div class="tabs" id="tabs" role="tablist"></div>
+    <p class="blurb" id="blurb"></p>
+
+    <div class="controls">
+      <button class="play" id="play">▶ Play conversation</button>
+      <span class="clock" id="clock">00:00</span>
+      <span class="verdict" id="verdict"></span>
+    </div>
+  </header>
+
+  <div id="transcript"></div>
 
   <footer>
-    Pipeline check: <a href="/api/health"><code>/api/health</code></a> &middot;
-    <a href="https://github.com/gajanand27-05/throughline">source</a><br>
-    AssemblyAI Voice Agent Hackathon &middot; team <code>tripod</code>
+    Every alert above was produced by <code>engine.run()</code> and cleared the
+    evidence gate — two real, distinct, chronologically ordered utterances in
+    this transcript. No citable evidence, no alert.<br>
+    Pipeline check: <a href="/api/health"><code>/api/health</code></a> ·
+    <a href="https://github.com/gajanand27-05/throughline">source</a> ·
+    AssemblyAI Voice Agent Hackathon, team <code>tripod</code>
   </footer>
 </main>
+
+<script>
+const GAP_MS = 90_000;      // gap worth marking explicitly in the transcript
+const CONTEXT_MS = 30_000;  // how far back a turn can be and still be "in reply to"
+
+const mmss = ms => {
+  const s = Math.floor(ms / 1000);
+  return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+};
+
+const humanGap = ms => {
+  const m = Math.round(ms / 60000);
+  return m >= 60 ? `${(m / 60).toFixed(1)} hr` : `${m} min`;
+};
+
+let scenarios = [], current = 0, timer = null, cursor = -1;
+
+const $ = id => document.getElementById(id);
+
+function render() {
+  const sc = scenarios[current];
+  $("blurb").textContent = sc.blurb;
+
+  const shown = new Set(sc.utterances.slice(0, cursor + 1).map(u => u.index));
+  const live = sc.alerts.filter(a => shown.has(a.fires_at));
+
+  $("transcript").innerHTML = sc.utterances.map((u, i) => {
+    const cite = live.some(a =>
+      a.evidence_1.utterance_index === u.index || a.evidence_2.utterance_index === u.index);
+    const alerts = live.filter(a => a.fires_at === u.index)
+                       .map(a => alertHTML(a, sc)).join("");
+    // The time jump IS the point — never let a 19-minute gap read as a pause.
+    const prev = sc.utterances[i - 1];
+    const gap = prev ? u.t_ms - prev.t_ms : 0;
+    const marker = gap >= GAP_MS
+      ? `<div class="gap${shown.has(u.index) ? "" : " hidden"}">
+           <span></span><span>⏩ ${humanGap(gap)} later</span></div>`
+      : "";
+    return `${marker}<div class="turn${shown.has(u.index) ? "" : " hidden"}${cite ? " cited" : ""}"
+                 id="u${u.index}">
+              <span class="t">${mmss(u.t_ms)}</span>
+              <span><span class="spk">${u.speaker}</span>${escapeHTML(u.text)}</span>
+            </div>${alerts}`;
+  }).join("");
+
+  const done = cursor >= sc.utterances.length - 1;
+  const v = $("verdict");
+  if (!done) { v.textContent = ""; v.className = "verdict"; }
+  else if (live.length) {
+    v.textContent = `${live.length} alert${live.length > 1 ? "s" : ""} · evidence cited`;
+    v.className = "verdict fired";
+  } else {
+    v.textContent = "0 alerts — no false alarm";
+    v.className = "verdict clean";
+  }
+  if (done && !live.length) {
+    $("transcript").insertAdjacentHTML("beforeend",
+      `<div class="empty">Conversation complete. Nothing was established and then
+       quietly changed, so the agent stayed silent.</div>`);
+  }
+  $("clock").textContent = mmss(cursor < 0 ? 0 : sc.utterances[cursor].t_ms);
+}
+
+// What the alert is asking the human to DO. The engine's own summary states the
+// mechanical fact; this states the ask. Never phrased as an accusation (DR-010).
+const NOTES = {
+  commitment_drift:
+    "Hedged acceptance of a changed term. Confirm before this is recorded as agreement.",
+  contradiction:
+    "Position reversed without acknowledgement. Confirm before quoting — the speaker may " +
+    "have a reason, but they never said it changed.",
+};
+
+// Context = the turn the evidence is answering. Shown because “Yeah... I guess.”
+// is meaningless without the question. It is NOT evidence and is never styled as
+// evidence: only the two gated utterances carry that weight (DR-005).
+function contextFor(a, sc) {
+  const i = sc.utterances.findIndex(u => u.index === a.evidence_2.utterance_index);
+  const prev = sc.utterances[i - 1];
+  if (!prev) return null;
+  if (prev.index === a.evidence_1.utterance_index) return null;   // already shown
+  if (prev.speaker === a.evidence_2.speaker) return null;         // not a prompt
+  if (a.evidence_2.t_ms - prev.t_ms > CONTEXT_MS) return null;    // too far back
+  return prev;
+}
+
+function alertHTML(a, sc) {
+  const row = (lab, e, cls = "") => `
+    <div class="ev ${cls}" data-goto="u${e.utterance_index ?? e.index}" title="Jump to this turn">
+      <span class="lab">${lab}<br><em style="font-weight:400">${mmss(e.t_ms)}</em></span>
+      <span class="txt"><em>${e.speaker}:</em> “${escapeHTML(e.text)}”</span>
+    </div>`;
+  const ctx = contextFor(a, sc);
+  return `<div class="alert">
+      <h2>${a.event_type.replace(/_/g, " ")} — ${a.speaker}</h2>
+      ${NOTES[a.event_type] ? `<p class="note">${NOTES[a.event_type]}</p>` : ""}
+      ${row("Earlier", a.evidence_1)}
+      ${ctx ? row("in reply to", ctx, "ctx") : ""}
+      ${row("Now", a.evidence_2)}
+      <div class="meta">
+        <span class="verified">✓ Evidence verified — 2 utterances in this transcript</span>
+        <span class="conf">model confidence ${Math.round(a.confidence * 100)}%</span>
+        <span class="btns">
+          <button class="btn" title="Not wired in this build">DISMISS</button>
+        </span>
+      </div>
+    </div>`;
+}
+
+const escapeHTML = s => s.replace(/[&<>"]/g, c =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function stop() { clearInterval(timer); timer = null; $("play").textContent = "▶ Play conversation"; }
+
+function play() {
+  const sc = scenarios[current];
+  if (timer) return stop();
+  if (cursor >= sc.utterances.length - 1) cursor = -1;
+  $("play").textContent = "❚❚ Pause";
+  timer = setInterval(() => {
+    if (cursor >= sc.utterances.length - 1) return stop();
+    cursor++;
+    render();
+    const el = $("u" + sc.utterances[cursor].index);
+    if (el) el.classList.add("flash");
+  }, 1100);
+  render();
+}
+
+function select(i) {
+  stop(); current = i; cursor = -1;
+  [...$("tabs").children].forEach((t, n) => t.setAttribute("aria-selected", n === i));
+  render();
+}
+
+$("play").onclick = play;
+$("transcript").onclick = e => {
+  const ev = e.target.closest("[data-goto]");
+  if (!ev) return;
+  const el = $(ev.dataset.goto);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+  el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
+};
+
+fetch("demo.json").then(r => r.json()).then(d => {
+  scenarios = d.scenarios;
+  $("tabs").innerHTML = scenarios.map((s, i) =>
+    `<button class="tab" role="tab" aria-selected="${i === 0}">${s.title}</button>`).join("");
+  [...$("tabs").children].forEach((t, i) => t.onclick = () => select(i));
+  select(0);
+}).catch(() => {
+  $("transcript").innerHTML =
+    `<div class="empty" style="color:var(--alert)">Could not load demo.json —
+     run <code>python build_demo.py</code>.</div>`;
+});
+</script>
 </body>
 </html>

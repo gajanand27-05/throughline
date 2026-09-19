@@ -1,0 +1,202 @@
+{
+  "scenarios": [
+    {
+      "name": "commitment_drift",
+      "title": "Commitment drift",
+      "blurb": "A hard constraint set at 00:18 quietly becomes a hedged yes to the opposite at 01:47.",
+      "utterances": [
+        {
+          "index": 0,
+          "speaker": "A",
+          "t_ms": 6000,
+          "text": "Let's talk timing. When do you need this delivered?"
+        },
+        {
+          "index": 1,
+          "speaker": "B",
+          "t_ms": 18000,
+          "text": "Friday is a hard deadline. Monday won't work, we have the audit that morning."
+        },
+        {
+          "index": 2,
+          "speaker": "A",
+          "t_ms": 31000,
+          "text": "Got it. Let me check what the warehouse can do."
+        },
+        {
+          "index": 3,
+          "speaker": "B",
+          "t_ms": 74000,
+          "text": "And the quantity stays at two hundred units."
+        },
+        {
+          "index": 4,
+          "speaker": "A",
+          "t_ms": 88000,
+          "text": "Two hundred, noted."
+        },
+        {
+          "index": 5,
+          "speaker": "A",
+          "t_ms": 102000,
+          "text": "So Monday delivery works for you?"
+        },
+        {
+          "index": 6,
+          "speaker": "B",
+          "t_ms": 107000,
+          "text": "Yeah... I guess."
+        }
+      ],
+      "alerts": [
+        {
+          "event_type": "commitment_drift",
+          "speaker": "B",
+          "t_ms": 107000,
+          "evidence_1": {
+            "utterance_index": 1,
+            "speaker": "B",
+            "t_ms": 18000,
+            "text": "Friday is a hard deadline. Monday won't work, we have the audit that morning."
+          },
+          "evidence_2": {
+            "utterance_index": 6,
+            "speaker": "B",
+            "t_ms": 107000,
+            "text": "Yeah... I guess."
+          },
+          "confidence": 0.94,
+          "summary": "Earlier commitment on 'delivery_date' was 'friday'; current statement moves to 'monday' with ambiguous acceptance.",
+          "fires_at": 6
+        }
+      ]
+    },
+    {
+      "name": "contradiction",
+      "title": "Contradiction",
+      "blurb": "A position stated in minute one is reversed twenty minutes later, with no acknowledgement that anything changed.",
+      "utterances": [
+        {
+          "index": 0,
+          "speaker": "A",
+          "t_ms": 12000,
+          "text": "Before we go further, do you want me to include the premium support plan?"
+        },
+        {
+          "index": 1,
+          "speaker": "B",
+          "t_ms": 21000,
+          "text": "No, I don't need the premium plan. We've never used support in three years."
+        },
+        {
+          "index": 2,
+          "speaker": "A",
+          "t_ms": 35000,
+          "text": "Understood, I'll leave it off the quote."
+        },
+        {
+          "index": 3,
+          "speaker": "B",
+          "t_ms": 640000,
+          "text": "One thing, our new site has nobody technical on staff."
+        },
+        {
+          "index": 4,
+          "speaker": "A",
+          "t_ms": 655000,
+          "text": "That's worth knowing."
+        },
+        {
+          "index": 5,
+          "speaker": "B",
+          "t_ms": 1208000,
+          "text": "So obviously we need the premium plan on this one, that's a given."
+        }
+      ],
+      "alerts": [
+        {
+          "event_type": "contradiction",
+          "speaker": "B",
+          "t_ms": 1208000,
+          "evidence_1": {
+            "utterance_index": 1,
+            "speaker": "B",
+            "t_ms": 21000,
+            "text": "No, I don't need the premium plan. We've never used support in three years."
+          },
+          "evidence_2": {
+            "utterance_index": 5,
+            "speaker": "B",
+            "t_ms": 1208000,
+            "text": "So obviously we need the premium plan on this one, that's a given."
+          },
+          "confidence": 0.9,
+          "summary": "Earlier position on 'premium_plan' was denied; now affirmed.",
+          "fires_at": 5
+        }
+      ]
+    },
+    {
+      "name": "clean_control",
+      "title": "Clean control",
+      "blurb": "A healthy conversation loaded with near-misses a naive detector fires on. Correct output is nothing at all.",
+      "utterances": [
+        {
+          "index": 0,
+          "speaker": "A",
+          "t_ms": 8000,
+          "text": "Do you want the extended warranty on these?"
+        },
+        {
+          "index": 1,
+          "speaker": "B",
+          "t_ms": 15000,
+          "text": "No, skip the warranty for now."
+        },
+        {
+          "index": 2,
+          "speaker": "A",
+          "t_ms": 24000,
+          "text": "No problem. For what it's worth, the failure rate on this model is higher than the previous one."
+        },
+        {
+          "index": 3,
+          "speaker": "B",
+          "t_ms": 39000,
+          "text": "Actually, let me change my answer on that. Put the warranty on, I've changed my mind."
+        },
+        {
+          "index": 4,
+          "speaker": "A",
+          "t_ms": 51000,
+          "text": "Done. Delivery, you said the fourteenth?"
+        },
+        {
+          "index": 5,
+          "speaker": "B",
+          "t_ms": 58000,
+          "text": "The fourteenth, yes."
+        },
+        {
+          "index": 6,
+          "speaker": "A",
+          "t_ms": 70000,
+          "text": "I think the bulk discount is the better deal for you here."
+        },
+        {
+          "index": 7,
+          "speaker": "B",
+          "t_ms": 79000,
+          "text": "I don't agree, the bulk discount doesn't work for our cash flow."
+        },
+        {
+          "index": 8,
+          "speaker": "B",
+          "t_ms": 95000,
+          "text": "Invoicing should be net thirty."
+        }
+      ],
+      "alerts": []
+    }
+  ]
+}

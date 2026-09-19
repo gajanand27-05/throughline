@@ -10,14 +10,23 @@ Built for the [AssemblyAI Voice Agent Hackathon](https://lablab.ai/ai-hackathons
 
 ## Status
 
-Work in progress. The integrity engine is built and tested; realtime audio is not yet wired.
+Work in progress. The integrity engine is built and tested, and the demo renders live
+from its output. Realtime audio is verified but not yet wired.
 
 | | |
 |---|---|
-| ✅ | Temporal memory, conflict detectors, evidence gate — **32 tests, no network** |
-| ⬜ | AssemblyAI realtime streaming + speaker attribution |
-| ⬜ | Replay mode |
-| ⬜ | CLARIFY intervention |
+| ✅ | Temporal memory, conflict detectors, evidence gate — **43 tests, no network** |
+| ✅ | LLM extraction layer — utterance → proposed events, strict JSON schema |
+| ✅ | Demo UI rendering real engine output, with cited evidence |
+| ✅ | Streaming + diarization verified against the live API — **7/7 speaker attribution** |
+| ⬜ | AssemblyAI realtime wiring (mic → worklet → websocket → engine) |
+| ⬜ | Replay mode, through the same pipeline |
+
+The extraction layer is written and schema-constrained but **cannot currently run**: the
+AssemblyAI LLM Gateway returns *"Your account does not have access to this LLM Gateway
+model"* for every model in its catalogue, while streaming and the core API work on the same
+key. The engine's independence from it (see Architecture) is why this blocks one half of the
+system rather than all of it.
 
 ---
 
@@ -30,20 +39,36 @@ Post-hoc analysis tells you what went wrong **after** it went wrong. By then the
 Throughline listens to a live multi-speaker conversation, maintains structured memory of claims, commitments and decisions, and speaks up **while the outcome can still change**:
 
 ```
-00:18  CUSTOMER   "Friday is a hard deadline. Monday won't work."
+00:18  SPEAKER B  "Friday is a hard deadline. Monday won't work."
                   → constraint recorded
 
-01:42  AGENT      "So Monday delivery works for you?"
-01:47  CUSTOMER   "Yeah... I guess."
+01:42  SPEAKER A  "So Monday delivery works for you?"
+01:47  SPEAKER B  "Yeah... I guess."
 
-       🔴 COMMITMENT DRIFT
-          Earlier:  Friday = hard deadline          00:18
-          Current:  ambiguous acceptance of Monday  01:47
-          Evidence: 2 utterances · Confidence: 94%
-          [ CLARIFY ]                    [ DISMISS ]
+       🔴 COMMITMENT DRIFT — Speaker B
+          Hedged acceptance of a changed term.
+          Confirm before this is recorded as agreement.
+
+          Earlier      00:18  "Friday is a hard deadline..."
+          in reply to  01:42  "So Monday delivery works for you?"
+          Now          01:47  "Yeah... I guess."
+
+          ✓ Evidence verified — 2 utterances in this transcript
+                                             [ DISMISS ]
 ```
 
-Pressing **CLARIFY** makes the agent ask: *"Earlier you said Friday was a hard deadline. Are you changing that requirement to Monday?"*
+Speakers are `A` / `B`, not roles. That is what diarization actually returns, and
+the system does not infer who is the agent and who is the customer — claiming
+otherwise would be role detection we haven't built.
+
+The alert names what changed and cites both utterances that prove it, while the delivery
+date is still negotiable.
+
+> **Scope note.** A spoken **CLARIFY** intervention — the agent asking *"Earlier you said
+> Friday was a hard deadline. Are you changing that requirement to Monday?"* — is **not in
+> this build.** It was cut to protect replay mode, which is what makes the demo work for a
+> judge evaluating the live URL alone. The claim here is detection with citable evidence,
+> and that is what the demo shows.
 
 ## The engineering claim
 
@@ -60,8 +85,9 @@ That bounds false positives and makes every alert inspectable. An agent that cri
 No API key, no network, no audio:
 
 ```bash
-python run_fixtures.py     # acceptance report
-python -m pytest tests -q  # 32 tests
+python run_fixtures.py      # acceptance report
+python -m pytest tests -q   # 43 tests
+python build_demo.py        # regenerate public/demo.json from engine output
 ```
 
 ```
