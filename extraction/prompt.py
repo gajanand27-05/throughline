@@ -52,6 +52,11 @@ Reuse an existing topic identifier whenever the utterance concerns that same
 subject. Two statements about the same subject MUST share a topic string, or
 the conflict between them becomes invisible.
 
+Reuse it ONLY for the same subject, though. A delivery date and an order
+quantity are different subjects even in the same sentence, and collapsing them
+into one topic invents a conflict where none exists. When in doubt, mint a new
+identifier: a missed conflict costs one alert, a merged topic costs trust.
+
 Judge only what this speaker said. Do not infer intent, do not resolve
 disagreements, do not decide who is right.\
 """

@@ -33,6 +33,10 @@ EVENT_SCHEMA = {
                     "kind": {
                         "type": "string",
                         "enum": KINDS,
+                        # Reverted 2026-09-20: a sharper value-centric wording here
+                        # made the model over-reuse topic keys, collapsing quantity
+                        # into delivery_date and manufacturing a false drift. It
+                        # fixed nothing it was aimed at. See DR-025.
                         "description": (
                             "constraint: a hard requirement or limit. "
                             "commitment: an agreement to a specific value. "

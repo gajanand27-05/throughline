@@ -266,3 +266,29 @@ A measurement bug surfaced and was fixed: elapsed time spanned the retry loop, s
 This is the failure split the design was built for. The model is a proposer; a weak proposer yields *missed* alerts, not false ones. "Bias toward missing rather than false-alarming" stopped being a slogan and started being a measurement.
 
 **Consequences.** The demo cannot currently run on live extraction, so replay with precomputed extraction becomes load-bearing rather than merely prudent. Rate limiting, not latency, is the real constraint on the token endpoint's design. Topic identity needs anchoring.
+
+## DR-025 — Extraction timebox closed: drift is reliable, contradiction is a known limitation
+
+**Context.** A timeboxed attempt to fix extraction, with **pass criteria fixed before running** rather than rationalised afterwards: clean control zero alerts 3/3 (hard requirement), commitment drift 3/3, contradiction ≥2/3 acceptable.
+
+**What worked.** The flagship utterance `"Yeah... I guess."` extracted nothing, so drift never fired. The cause was **not** the context window, the topic vocabulary, or model size — all were already in place, and the model could see the question it was answering. Four variants were tested against the live model rather than reasoned about:
+
+| Variant | Result |
+|---|---|
+| Baseline | nothing |
+| Minus the "merely acknowledging" clause | nothing |
+| **Baseline + explicit hedged-yes rule** | **commitment / monday / ambiguous=true** |
+
+The model had the context and lacked the *rule*.
+
+**What failed, and was reverted.** Contradiction fails because a rejection is extracted as `kind=commitment`, and that detector only fires on claim/preference/constraint. Sharpening the `kind` descriptions **made things worse**: contradiction stayed at 0/3, and drift *regressed* to firing a spurious second alert. Diagnosed rather than guessed — `"the quantity stays at two hundred units"` was being given the topic `delivery_date`, collapsing quantity into date, so the engine correctly flagged a drift from `friday` to `two_hundred_units`. **The engine did nothing wrong; the extractor handed it a false premise.** Reverted, and replaced with a narrower rule: reuse a topic only for the same subject, because a missed conflict costs one alert and a merged topic costs trust.
+
+**Decision.** Contradiction is recorded as a **known limitation** — not fixed, not worked around.
+
+**Explicitly rejected:** making contradiction fire on any same-speaker polarity reversal regardless of `kind`. That would change what the detector claims and erode the separation between detectors — bending the engine to fit a weak model. The engine is the part that works.
+
+**Measured, final** (3 runs each): clean control **3/3 zero alerts**; commitment drift **3/3**; contradiction **0/3**; schema validity **33/33**; p50 ≈ 1.1 s.
+
+**Rationale.** The failure mode is consistent with the whole design: a weak proposer produces *missed* alerts, never false ones. Across every configuration tried — including the one that regressed — the clean control never once produced a false positive.
+
+**Consequences.** The demo page states these rates rather than showing a good run silently; publishing `contradiction 0/3` is evidence of discipline and matches the "misses, not false alarms" claim. The demo's events stay hand-authored, because regenerating from live extraction would silently drop the contradiction scenario, and the page says so plainly.

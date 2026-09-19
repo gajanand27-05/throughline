@@ -110,16 +110,24 @@ def evaluate(name, fixture, runs, model):
     if not results:
         return {"name": name, "fatal": errors}
 
-    # 1. end-to-end
-    correct = 0
+    # 1. end-to-end, per run. Totals hide variance, and variance is the
+    # failure mode this harness exists to catch.
+    correct, per_run = 0, []
+    want = [(e["event_type"], e["speaker"], *e["evidence_indices"])
+            for e in expected]
     for result in results:
         got = [(a.event_type, a.speaker,
                 a.evidence_1.utterance_index, a.evidence_2.utterance_index)
                for a in result["alerts"]]
-        want = [(e["event_type"], e["speaker"], *e["evidence_indices"])
-                for e in expected]
-        if got == want:
-            correct += 1
+        ok = got == want
+        correct += ok
+        if ok:
+            detail = "as expected"
+        elif not got:
+            detail = "no alerts fired"
+        else:
+            detail = "; ".join(f"{t} [{a},{b}]" for t, _s, a, b in got)
+        per_run.append({"ok": ok, "detail": detail})
 
     # 2. consistency: how often the whole conversation extracts identically
     whole = Counter(tuple(r["signatures"]) for r in results)
@@ -138,6 +146,7 @@ def evaluate(name, fixture, runs, model):
         "runs": len(results),
         "expected_alerts": len(expected),
         "end_to_end_correct": correct,
+        "per_run": per_run,
         "identical_runs": modal,
         "min_utterance_agreement": min(per_utterance_agreement),
         "events_per_run": [r["event_count"] for r in results],
@@ -196,6 +205,12 @@ def main():
         sch = f"{r['valid']}/{r['proposed']}"
         print(f"  {r['name']:<18}{e2e:<13}{idn:<12}{agree:<12}{sch:<10}"
               f"{str(r['p50_ms'])+'ms':<10}{r['max_ms']}ms")
+
+    print("\n  Per run (variance is the thing to watch):")
+    for r in reports:
+        for i, run_ in enumerate(r["per_run"], 1):
+            mark = "ok  " if run_["ok"] else "FAIL"
+            print(f"    {r['name']:<18}run {i}  {mark}  {run_['detail']}")
 
     tokens = sum(r["tokens"] for r in reports)
     prop = sum(r["proposed"] for r in reports)

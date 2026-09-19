@@ -190,9 +190,13 @@
     this transcript. No citable evidence, no alert.<br>
     <b>What is and isn't live here:</b> the alerts and their evidence are real engine
     output. The <i>events</i> feeding them are hand-authored, so this page exercises the
-    detection layer, not the extractor. Live extraction is measured separately —
-    see <a href="https://github.com/gajanand27-05/throughline/blob/main/DECISIONS.md">DR-024</a>,
-    including what it currently gets wrong.<br>
+    detection layer, not the extractor.<br>
+    <b>Live extraction, measured over 3 runs:</b> commitment drift fired 3/3 · clean
+    control stayed at zero alerts 3/3 · contradiction 0/3 · schema validity 33/33 ·
+    median 1.1&thinsp;s per utterance. Contradiction is a known limitation, not a
+    tuned-away one —
+    <a href="https://github.com/gajanand27-05/throughline/blob/main/DECISIONS.md">DR-024 and DR-025</a>
+    record why.<br>
     Pipeline check: <a href="/api/health"><code>/api/health</code></a> ·
     <a href="https://github.com/gajanand27-05/throughline">source</a> ·
     AssemblyAI Voice Agent Hackathon, team <code>tripod</code>
