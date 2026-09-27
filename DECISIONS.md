@@ -316,3 +316,23 @@ CLARIFY returns **minimal**: when an alert fires the agent speaks one short line
 **Rationale.** Across all sixteen read, **nobody detects conflict between what a conversation established earlier and what it does later** — one competitor names that exact gap as its own stated limitation. Temporal memory is the differentiator; the gate is what makes it trustworthy.
 
 **Consequences.** README, deck and video lead with temporal memory, not the evidence gate. 61 drafts remain hidden, so this supports no whitespace claim — only that the lane was open among the 16 read.
+
+
+## DR-027 — The Vercel deployment is static-only; the Python runtime is dropped
+
+**Context.** Deploying on 2026-09-26 with 4 days left. Vercel CLI 60 refused five times with *"No python entrypoint found in default locations"*, demanding a single entrypoint declared in `pyproject.toml` (`[tool.vercel] entrypoint = "api.health:handler"`). Cause traced to the project's stored **Framework Preset: Python**, auto-detected by `vercel link`, combined with the `functions: {"api/*.py": ...}` block.
+
+Ruled out by elimination, not guesswork: removing `requirements.txt` (still failed), excluding `api/` from upload (still failed), removing the `functions` block (still failed). What worked was `"framework": null` plus `buildCommand: null` and `installCommand: null`.
+
+**Decision.** Ship the demo **static-only**. `vercel.json` disables framework detection and serves `public/`. `api/`, `engine/`, `extraction/` and `fixtures/` are excluded from the deploy via `.vercelignore`. The dead `/api/health` link was removed from the page footer.
+
+**Rationale.** Vercel's suggested fix would hard-code `api.health:handler` as *the* single entrypoint, which directly contradicts the architecture in `CLAUDE.md` §7 — `session.py` and `extract.py` are separate functions. Contorting the design to satisfy a build detector, for a diagnostic endpoint, under deadline, is the wrong trade.
+
+The demo page is fully self-contained: no CDN dependency, one relative `fetch("demo.json")`, no secrets. Static hosting loses nothing the demo needs, and it converted deliverable #9 from outstanding to done — the single item a judge is most likely to open.
+
+**Consequences.**
+- **This blocks realtime.** The token endpoint (DR-001, DR-002) has no working runtime path on Vercel. Wiring the microphone now needs this solved first, so the Python runtime is a prerequisite for realtime, not a follow-up to it.
+- `/api/health` no longer exists in production. Its purpose — proving `includeFiles` resolves in a deployed function — is unmet and unproven.
+- The Framework Preset was also corrected to **Other** on the project itself, so a deploy without the local `vercel.json` no longer fails.
+- Live at **https://throughline-teal.vercel.app**, verified by anonymous GET and SHA-256 match against the local build.
+- Deployment Protection was **on by default** and had to be disabled — every URL 302'd to Vercel SSO. Worth knowing for any future Vercel project that a judge must reach.
