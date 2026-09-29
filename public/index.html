@@ -74,6 +74,34 @@
   .verdict.clean { color: var(--ok); }
   .verdict.fired { color: var(--alert); }
 
+  /* The agent's memory, made visible. The product claim is "remembers what
+     was agreed"; showing only a transcript and an alert never displays the
+     thing being remembered. */
+  .memory {
+    border: 1px solid var(--line); border-radius: 10px;
+    padding: .7rem .85rem; margin: 0 0 1.1rem;
+  }
+  .memory h2 {
+    font-size: .68rem; text-transform: uppercase; letter-spacing: .1em;
+    color: var(--muted); margin: 0 0 .55rem; font-weight: 700;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .chip {
+    font-size: .78rem; padding: .28rem .6rem; border-radius: 999px;
+    border: 1px solid var(--line); display: flex; gap: .35rem; align-items: baseline;
+    transition: border-color .3s, background .3s;
+  }
+  .chip .k { color: var(--muted); font-size: .72rem; }
+  .chip .v { font-weight: 600; }
+  .chip .at {
+    font: .68rem ui-monospace, Consolas, monospace; color: var(--muted); opacity: .8;
+  }
+  .chip.conflict { border-color: var(--alert); background: var(--alert-bg); }
+  .chip.conflict .v { color: var(--alert); }
+  .chip.fresh { animation: chipIn .5s ease-out; }
+  @keyframes chipIn { from { transform: translateY(-3px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .memory .none { color: var(--muted); font-size: .8rem; font-style: italic; }
+
   .turn {
     display: grid; grid-template-columns: 3.6rem 1fr; gap: .9rem;
     padding: .5rem 0; border-top: 1px solid var(--line);
@@ -96,9 +124,12 @@
   }
 
   .alert {
-    border: 1px solid var(--alert); border-left-width: 3px; border-radius: 9px;
-    background: var(--card); padding: .9rem 1rem; margin: .8rem 0;
+    border: 1px solid var(--alert); border-left-width: 4px; border-radius: 9px;
+    background: var(--card); padding: 1rem 1.1rem; margin: 1rem 0;
+    box-shadow: 0 2px 14px -6px color-mix(in srgb, var(--alert) 55%, transparent);
+    animation: alertIn .45s ease-out;
   }
+  @keyframes alertIn { from { transform: scale(.985); opacity: 0; } to { transform: none; opacity: 1; } }
   .alert h2 {
     font-size: .74rem; letter-spacing: .1em; text-transform: uppercase;
     color: var(--alert); margin: 0 0 .7rem; font-weight: 700;
@@ -182,14 +213,16 @@
     <div class="controls">
       <button class="play" id="play">▶ Play conversation</button>
       <select id="speed" class="speed" title="Slower speeds leave room to narrate over the demo">
-        <option value="1100">Normal</option>
-        <option value="2200">Slow</option>
-        <option value="3400">Narration</option>
+        <option value="550">Normal</option>
+        <option value="900">Slow</option>
+        <option value="1400">Narration</option>
       </select>
       <span class="clock" id="clock">00:00</span>
       <span class="verdict" id="verdict"></span>
     </div>
   </header>
+
+  <div class="memory" id="memory"></div>
 
   <div id="transcript"></div>
 
@@ -212,9 +245,16 @@
 </main>
 
 <script>
-const GAP_MS = 90_000;      // gap worth marking explicitly in the transcript
+const GAP_MS = 45_000;      // gap worth marking explicitly in the transcript
 const CONTEXT_MS = 30_000;  // how far back a turn can be and still be "in reply to"
-const HOLD_MS = 2600;       // pause on the alert — it is the point of the demo
+const HOLD_MS = 1500;       // brief beat on the alert, not a stop
+
+// Time should be felt, not waited through. Log-scaled and deliberately narrow:
+// a long gap reads longer than a short one without ever dragging.
+const paceFor = (gapMs, base) => {
+  const f = 0.6 + 0.65 * (Math.log10(1 + Math.max(gapMs, 0) / 1000) / Math.log10(1201));
+  return Math.round(base * Math.min(Math.max(f, 0.6), 1.25));
+};
 
 const mmss = ms => {
   const s = Math.floor(ms / 1000);
@@ -266,6 +306,29 @@ function render() {
       `<div class="idle">Press <b>▶ Play conversation</b> to watch this
        ${sc.utterances.length}-turn conversation unfold with real timestamps.</div>`;
   }
+
+  // The memory panel: facts the engine has established so far, with the pair
+  // an alert cites marked as in conflict.
+  const conflicted = new Set();
+  live.forEach(a => {
+    conflicted.add(a.evidence_1.utterance_index);
+    conflicted.add(a.evidence_2.utterance_index);
+  });
+  const facts = (sc.established || []).filter(e => shown.has(e.utterance_index));
+  const newest = facts.length ? facts[facts.length - 1].utterance_index : -1;
+  $("memory").innerHTML =
+    `<h2>Established so far — the agent's memory</h2>` +
+    (facts.length
+      ? `<div class="chips">` + facts.map(e => {
+          const cls = (conflicted.has(e.utterance_index) ? " conflict" : "")
+                    + (e.utterance_index === newest ? " fresh" : "");
+          return `<span class="chip${cls}">
+              <span class="k">${escapeHTML(e.topic)}</span>
+              <span class="v">${escapeHTML(e.value || e.kind)}</span>
+              <span class="at">${mmss(e.t_ms)}</span>
+            </span>`;
+        }).join("") + `</div>`
+      : `<p class="none">Nothing established yet.</p>`);
 
   const done = cursor >= sc.utterances.length - 1;
   const v = $("verdict");
@@ -366,11 +429,21 @@ function step() {
   if (focus) focus.scrollIntoView({ behavior: "smooth", block: fired ? "center" : "nearest" });
 
   if (fired && timer) { clearInterval(timer); timer = setTimeout(resume, HOLD_MS); }
+  else if (timer) { clearInterval(timer); timer = setTimeout(resume, nextDelay()); }
+}
+
+// Delay before the NEXT turn, scaled to how much conversation time it skips.
+function nextDelay() {
+  const sc = scenarios[current];
+  const base = Number($("speed").value);
+  const cur = sc.utterances[cursor], nxt = sc.utterances[cursor + 1];
+  if (!cur || !nxt) return base;
+  return paceFor(nxt.t_ms - cur.t_ms, base);
 }
 
 function resume() {
   if (timer === null) return;
-  timer = setInterval(step, Number($("speed").value));
+  timer = setTimeout(step, nextDelay());
 }
 
 function play() {
@@ -378,7 +451,7 @@ function play() {
   if (timer) return stop();
   if (cursor >= sc.utterances.length - 1) cursor = -1;
   $("play").textContent = "❚❚ Pause";
-  timer = setInterval(step, Number($("speed").value));
+  timer = setTimeout(step, Number($("speed").value));
   render();
 }
 
@@ -389,7 +462,7 @@ function select(i) {
 }
 
 $("play").onclick = play;
-$("speed").onchange = () => { if (timer) { clearInterval(timer); resume(); } };
+$("speed").onchange = () => { if (timer) { clearTimeout(timer); resume(); } };
 $("transcript").onclick = e => {
   const ev = e.target.closest("[data-goto]");
   if (!ev) return;

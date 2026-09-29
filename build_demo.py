@@ -86,6 +86,16 @@ def build(name):
         # evidence that justifies it exists.
         "alerts": [dict(a.to_dict(), fires_at=a.evidence_2.utterance_index)
                    for a in alerts],
+        # What the engine has established, so the page can SHOW the memory.
+        # The product claim is "remembers what was agreed"; a page that renders
+        # only a transcript and an alert never displays the thing being
+        # remembered, which is the differentiator.
+        "established": [
+            {"utterance_index": e.utterance_index, "t_ms": e.t_ms,
+             "kind": e.kind.value, "topic": e.topic, "value": e.value,
+             "speaker": e.speaker, "text": e.text}
+            for e in events
+        ],
     }
 
 

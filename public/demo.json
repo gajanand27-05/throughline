@@ -28,25 +28,25 @@
         {
           "index": 3,
           "speaker": "B",
-          "t_ms": 74000,
+          "t_ms": 292000,
           "text": "And the quantity stays at two hundred units."
         },
         {
           "index": 4,
           "speaker": "A",
-          "t_ms": 88000,
+          "t_ms": 306000,
           "text": "Two hundred, noted."
         },
         {
           "index": 5,
           "speaker": "A",
-          "t_ms": 102000,
+          "t_ms": 1181000,
           "text": "So Monday delivery works for you?"
         },
         {
           "index": 6,
           "speaker": "B",
-          "t_ms": 107000,
+          "t_ms": 1187000,
           "text": "Yeah... I guess."
         }
       ],
@@ -56,7 +56,7 @@
           "status": "active",
           "event_type": "commitment_drift",
           "speaker": "B",
-          "t_ms": 107000,
+          "t_ms": 1187000,
           "evidence_1": {
             "utterance_index": 1,
             "speaker": "B",
@@ -66,12 +66,41 @@
           "evidence_2": {
             "utterance_index": 6,
             "speaker": "B",
-            "t_ms": 107000,
+            "t_ms": 1187000,
             "text": "Yeah... I guess."
           },
           "confidence": 0.94,
           "summary": "Earlier commitment on 'delivery_date' was 'friday'; current statement moves to 'monday' with ambiguous acceptance.",
           "fires_at": 6
+        }
+      ],
+      "established": [
+        {
+          "utterance_index": 1,
+          "t_ms": 18000,
+          "kind": "constraint",
+          "topic": "delivery_date",
+          "value": "friday",
+          "speaker": "B",
+          "text": "Friday is a hard deadline"
+        },
+        {
+          "utterance_index": 3,
+          "t_ms": 292000,
+          "kind": "commitment",
+          "topic": "quantity",
+          "value": "200",
+          "speaker": "B",
+          "text": "quantity stays at 200 units"
+        },
+        {
+          "utterance_index": 6,
+          "t_ms": 1187000,
+          "kind": "commitment",
+          "topic": "delivery_date",
+          "value": "monday",
+          "speaker": "B",
+          "text": "ambiguous acceptance of Monday"
         }
       ]
     },
@@ -142,6 +171,26 @@
           "summary": "Earlier position on 'premium_plan' was denied; now affirmed.",
           "fires_at": 5
         }
+      ],
+      "established": [
+        {
+          "utterance_index": 1,
+          "t_ms": 21000,
+          "kind": "preference",
+          "topic": "premium_plan",
+          "value": null,
+          "speaker": "B",
+          "text": "does not want premium plan"
+        },
+        {
+          "utterance_index": 5,
+          "t_ms": 1208000,
+          "kind": "preference",
+          "topic": "premium_plan",
+          "value": null,
+          "speaker": "B",
+          "text": "needs premium plan"
+        }
       ]
     },
     {
@@ -206,7 +255,63 @@
           "text": "Invoicing should be net thirty."
         }
       ],
-      "alerts": []
+      "alerts": [],
+      "established": [
+        {
+          "utterance_index": 1,
+          "t_ms": 15000,
+          "kind": "preference",
+          "topic": "extended_warranty",
+          "value": null,
+          "speaker": "B",
+          "text": "declines warranty"
+        },
+        {
+          "utterance_index": 3,
+          "t_ms": 39000,
+          "kind": "preference",
+          "topic": "extended_warranty",
+          "value": null,
+          "speaker": "B",
+          "text": "openly changes mind, wants warranty"
+        },
+        {
+          "utterance_index": 5,
+          "t_ms": 58000,
+          "kind": "commitment",
+          "topic": "delivery_date",
+          "value": "14th",
+          "speaker": "B",
+          "text": "confirms the 14th"
+        },
+        {
+          "utterance_index": 6,
+          "t_ms": 70000,
+          "kind": "preference",
+          "topic": "bulk_discount",
+          "value": null,
+          "speaker": "A",
+          "text": "agent favours bulk discount"
+        },
+        {
+          "utterance_index": 7,
+          "t_ms": 79000,
+          "kind": "preference",
+          "topic": "bulk_discount",
+          "value": null,
+          "speaker": "B",
+          "text": "customer rejects bulk discount"
+        },
+        {
+          "utterance_index": 8,
+          "t_ms": 95000,
+          "kind": "commitment",
+          "topic": "payment_terms",
+          "value": "net_30",
+          "speaker": "B",
+          "text": "net thirty invoicing"
+        }
+      ]
     }
   ]
 }

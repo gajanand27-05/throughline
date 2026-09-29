@@ -336,3 +336,19 @@ The demo page is fully self-contained: no CDN dependency, one relative `fetch("d
 - The Framework Preset was also corrected to **Other** on the project itself, so a deploy without the local `vercel.json` no longer fails.
 - Live at **https://throughline-teal.vercel.app**, verified by anonymous GET and SHA-256 match against the local build.
 - Deployment Protection was **on by default** and had to be disabled — every URL 302'd to Vercel SSO. Worth knowing for any future Vercel project that a judge must reach.
+
+## DR-028 — Show the memory, and give the drift fixture real elapsed time
+
+**Context.** The pitch (DR-026) leads with temporal memory: *a constraint from minute two, contradicted twenty minutes later.* The demo page contradicted it on two counts. The `commitment_drift` fixture ran **00:06 → 01:47**, so the "earlier" constraint was 89 seconds old when the hedged *"Yeah... I guess."* arrived — a span any listener holds without help. And the page rendered only a transcript and an alert, so the thing being remembered was never on screen.
+
+**Decision.**
+1. **Stretch the fixture's timeline to 00:06 → 19:47.** The Friday constraint stays at 00:18; the quantity commitment moves to 04:52; the question and the hedged yes move to 19:41 / 19:47. Text, speakers, order and events are unchanged.
+2. **Add a memory panel.** `build_demo.py` now emits `established` — every event the engine was given, with topic, value and timestamp — and the page renders the ones reached so far as chips, marking the pair an alert cites as in conflict.
+3. **Pace playback by elapsed conversation time.** The delay before each turn is log-scaled from the real gap and clamped to 0.6–1.25× the base, so a twenty-minute gap reads longer than a six-second one without the demo stalling. The alert hold drops from 2.6 s to 1.5 s; the gap marker threshold from 90 s to 45 s.
+
+**Rationale.** The fixtures are synthetic, so their timestamps are a presentation choice, not a measurement. Changing them is only legitimate if the engine's result cannot depend on them — and it does not in any way that moved: the engine reads `t_ms` in exactly one place, `engine/evidence.py`, to reject an alert unless the earlier utterance is strictly before the later one. Stretching the gaps preserves order, and the rebuild still yields **1 / 1 / 0** alerts across `commitment_drift` / `contradiction` / `clean_control`. The "in reply to" link on the card is unaffected: the question and the answer are 6 s apart, well inside its 30 s window.
+
+**Consequences.**
+- The demo now shows what the pitch claims — memory across twenty minutes — instead of asking the viewer to take it on trust.
+- The README's worked example still shows the old `01:42` / `01:47` timestamps and must be updated to match.
+- A bug found while building this: an edit that should have defined `paceFor` silently failed to apply, so the page threw a `ReferenceError` on the first playback step while `node --check` passed — **syntax checking does not catch unresolved references.** `paceFor` is defined in the committed page; playback must be exercised, not only syntax-checked, before a change to it counts as verified.

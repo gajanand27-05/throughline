@@ -24,25 +24,25 @@
     {
       "index": 3,
       "speaker": "B",
-      "t_ms": 74000,
+      "t_ms": 292000,
       "text": "And the quantity stays at two hundred units."
     },
     {
       "index": 4,
       "speaker": "A",
-      "t_ms": 88000,
+      "t_ms": 306000,
       "text": "Two hundred, noted."
     },
     {
       "index": 5,
       "speaker": "A",
-      "t_ms": 102000,
+      "t_ms": 1181000,
       "text": "So Monday delivery works for you?"
     },
     {
       "index": 6,
       "speaker": "B",
-      "t_ms": 107000,
+      "t_ms": 1187000,
       "text": "Yeah... I guess."
     }
   ],
@@ -60,7 +60,7 @@
       "kind": "commitment",
       "speaker": "B",
       "utterance_index": 3,
-      "t_ms": 74000,
+      "t_ms": 292000,
       "topic": "quantity",
       "value": "200",
       "text": "quantity stays at 200 units"
@@ -69,7 +69,7 @@
       "kind": "commitment",
       "speaker": "B",
       "utterance_index": 6,
-      "t_ms": 107000,
+      "t_ms": 1187000,
       "topic": "delivery_date",
       "value": "monday",
       "ambiguous": true,
