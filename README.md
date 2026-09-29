@@ -6,27 +6,38 @@ Every transcription product answers *"what was said?"*. Throughline answers **"w
 
 Built for the [AssemblyAI Voice Agent Hackathon](https://lablab.ai/ai-hackathons/assemblyai-voice-agent-hackathon) — team `tripod`.
 
+**Live demo: https://throughline-teal.vercel.app**
+
 ---
 
 ## Status
 
-Work in progress. The integrity engine is built and tested, and the demo renders live
-from its output. Realtime audio is verified but not yet wired.
+The integrity engine is built and tested, extraction runs against AssemblyAI's LLM Gateway,
+and the live demo renders the engine's real output. Realtime audio is verified but not yet
+wired, so the demo replays scripted conversations rather than listening to a microphone.
 
 | | |
 |---|---|
-| ✅ | Temporal memory, conflict detectors, evidence gate — **43 tests, no network** |
-| ✅ | LLM extraction layer — utterance → proposed events, strict JSON schema |
-| ✅ | Demo UI rendering real engine output, with cited evidence |
+| ✅ | Temporal memory, conflict detectors, evidence gate — **59 tests, no network** |
+| ✅ | LLM extraction on AssemblyAI's LLM Gateway — utterance → proposed events, validated locally against a closed schema |
+| ✅ | Demo UI rendering real engine output: the agent's memory as it builds, and every alert with its cited evidence |
 | ✅ | Streaming + diarization verified against the live API — **7/7 speaker attribution** |
 | ⬜ | AssemblyAI realtime wiring (mic → worklet → websocket → engine) |
 | ⬜ | Replay mode, through the same pipeline |
+| ⬜ | Spoken CLARIFY intervention |
 
-The extraction layer is written and schema-constrained but **cannot currently run**: the
-AssemblyAI LLM Gateway returns *"Your account does not have access to this LLM Gateway
-model"* for every model in its catalogue, while streaming and the core API work on the same
-key. The engine's independence from it (see Architecture) is why this blocks one half of the
-system rather than all of it.
+**What the demo is, precisely.** Three scripted deal calls, each run through `engine.run()`
+and the evidence gate by `build_demo.py`, which refuses to write if the alert count
+disagrees with the fixture. The *events* the engine receives are hand-authored, not
+live-extracted: live extraction drops the contradiction case (see below), and a demo
+regenerated from it would silently lose that scenario. The page says so in its footer, and
+each tab states that scenario's measured live-extraction rate.
+
+The extraction layer was blocked for a day — every Gateway model returned *"Your account
+does not have access to this LLM Gateway model"* (DR-015). It now runs on the one model the
+account can reach, `qwen3.5-4b-32k-fast`, using prompt-JSON plus local schema validation
+because that model does not accept `response_format`. The engine's independence from it
+(see Architecture) is why the outage blocked one half of the system rather than all of it.
 
 ---
 
@@ -36,22 +47,24 @@ Consequential conversations go wrong quietly. A constraint stated at minute two 
 
 Post-hoc analysis tells you what went wrong **after** it went wrong. By then the order is placed and the meeting is over.
 
-Throughline listens to a live multi-speaker conversation, maintains structured memory of claims, commitments and decisions, and speaks up **while the outcome can still change**:
+Throughline listens to a live multi-speaker conversation, maintains structured memory of claims, commitments and decisions, and flags the drift **while the outcome can still change**:
 
 ```
 00:18  SPEAKER B  "Friday is a hard deadline. Monday won't work."
                   → constraint recorded
 
-01:42  SPEAKER A  "So Monday delivery works for you?"
-01:47  SPEAKER B  "Yeah... I guess."
+       ⋮  nineteen minutes later — quantity agreed, the call moves on
+
+19:41  SPEAKER A  "So Monday delivery works for you?"
+19:47  SPEAKER B  "Yeah... I guess."
 
        🔴 COMMITMENT DRIFT — Speaker B
           Hedged acceptance of a changed term.
           Confirm before this is recorded as agreement.
 
           Earlier      00:18  "Friday is a hard deadline..."
-          in reply to  01:42  "So Monday delivery works for you?"
-          Now          01:47  "Yeah... I guess."
+          in reply to  19:41  "So Monday delivery works for you?"
+          Now          19:47  "Yeah... I guess."
 
           ✓ Evidence verified — 2 utterances in this transcript
                                              [ DISMISS ]
@@ -139,17 +152,18 @@ No API key, no network, no audio:
 
 ```bash
 python run_fixtures.py      # acceptance report
-python -m pytest tests -q   # 43 tests
+python -m pytest tests -q   # 59 tests
 python build_demo.py        # regenerate public/demo.json from engine output
 ```
 
 ```
-5 fixtures processed
+6 fixtures processed
 
   clean_control      PASS - 0 alerts
   commitment_drift   PASS
   contradiction      PASS
   decision_conflict  SKIPPED - post-MVP
+  speaker_revision   PASS - 2 alert(s), 3 revision(s) -> 0 still standing
   unresolved_item    SKIPPED - post-MVP
 
   False-positive guard: PASS
@@ -180,7 +194,7 @@ engine/
 
 ## Why it's built this way
 
-[`DECISIONS.md`](DECISIONS.md) is the decision trail — 23 numbered records covering
+[`DECISIONS.md`](DECISIONS.md) is the decision trail — 28 numbered records covering
 the architecture, the scope cuts, and the things that turned out to be wrong.
 
 A few worth reading if you only read three:
