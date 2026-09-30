@@ -45,7 +45,7 @@ LIVE = {
 
 BLURBS = {
     "commitment_drift": "A hard constraint set at 00:18 quietly becomes a hedged "
-                        "yes to the opposite at 01:47.",
+                        "yes to the opposite at 19:47.",
     "contradiction": "A position stated in minute one is reversed twenty minutes "
                      "later, with no acknowledgement that anything changed.",
     "clean_control": "A healthy conversation loaded with near-misses a naive "

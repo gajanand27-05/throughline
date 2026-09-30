@@ -3,7 +3,7 @@
     {
       "name": "commitment_drift",
       "title": "Commitment drift",
-      "blurb": "A hard constraint set at 00:18 quietly becomes a hedged yes to the opposite at 01:47.",
+      "blurb": "A hard constraint set at 00:18 quietly becomes a hedged yes to the opposite at 19:47.",
       "live_kind": "ok",
       "live_note": "Live extraction reproduces this end-to-end, 3/3 runs.",
       "utterances": [
