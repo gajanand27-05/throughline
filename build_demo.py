@@ -38,7 +38,7 @@ LIVE = {
         "Live extraction reproduces this end-to-end, 3/3 runs."),
     "contradiction": ("miss",
         "Engine behaviour on hand-authored events. Live extraction currently "
-        "misses this case (0/3) — see DR-025."),
+        "catches this case in 0 of 3 runs — see DR-025."),
     "clean_control": ("ok",
         "Live extraction also stays silent here — zero alerts, 3/3 runs."),
 }

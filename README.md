@@ -140,7 +140,7 @@ misbehaving.
 That is the design working as intended. The model is a proposer, and a weak
 proposer yields **missed alerts, never false ones**. Measured over 3 runs:
 commitment drift fired 3/3, the clean control stayed silent 3/3, contradiction
-missed 0/3. All three rates are published, including the one that fails —
+was caught 0/3. All three rates are published, including the one that fails —
 see [DR-024 and DR-025](DECISIONS.md).
 
 The same principle applies upstream in the extraction prompt, where topics must

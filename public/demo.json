@@ -109,7 +109,7 @@
       "title": "Contradiction",
       "blurb": "A position stated in minute one is reversed twenty minutes later, with no acknowledgement that anything changed.",
       "live_kind": "miss",
-      "live_note": "Engine behaviour on hand-authored events. Live extraction currently misses this case (0/3) \u2014 see DR-025.",
+      "live_note": "Engine behaviour on hand-authored events. Live extraction currently catches this case in 0 of 3 runs \u2014 see DR-025.",
       "utterances": [
         {
           "index": 0,
