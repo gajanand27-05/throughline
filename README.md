@@ -13,8 +13,13 @@ Built for the [AssemblyAI Voice Agent Hackathon](https://lablab.ai/ai-hackathons
 ## Status
 
 The integrity engine is built and tested, extraction runs against AssemblyAI's LLM Gateway,
-and the live demo renders the engine's real output. Realtime audio is verified but not yet
-wired, so the demo replays scripted conversations rather than listening to a microphone.
+and the live demo renders the engine's real output. Realtime audio was verified against the
+API but never wired, so the demo replays scripted conversations rather than listening to a
+microphone. This is the final state of the submission.
+
+The deployed site is **static-only** (DR-027): Vercel's Python runtime could not be made to
+deploy, so no serverless function runs in production — including the token endpoint that
+realtime depends on.
 
 | | |
 |---|---|
@@ -22,9 +27,9 @@ wired, so the demo replays scripted conversations rather than listening to a mic
 | ✅ | LLM extraction on AssemblyAI's LLM Gateway — utterance → proposed events, validated locally against a closed schema |
 | ✅ | Demo UI rendering real engine output: the agent's memory as it builds, and every alert with its cited evidence |
 | ✅ | Streaming + diarization verified against the live API — **7/7 speaker attribution** |
-| ⬜ | AssemblyAI realtime wiring (mic → worklet → websocket → engine) |
-| ⬜ | Replay mode, through the same pipeline |
-| ⬜ | Spoken CLARIFY intervention |
+| ⬜ | AssemblyAI realtime wiring (mic → worklet → websocket → engine) — not built; blocked by the static-only deploy (DR-027) |
+| ⬜ | Replay mode, through the same pipeline — not built |
+| ⬜ | Spoken CLARIFY intervention — cut (see scope note below) |
 
 **What the demo is, precisely.** Three scripted deal calls, each run through `engine.run()`
 and the evidence gate by `build_demo.py`, which refuses to write if the alert count
@@ -120,8 +125,10 @@ That bounds false positives and makes every alert inspectable. An agent that cri
 
 **And an alert is never settled.** Diarization can reassign a speaker after an alert has
 fired. When that happens the gate re-runs, and an alert whose evidence no longer supports
-it is **withdrawn on screen** rather than left standing. Quietly misattributing a quote is
+it is **withdrawn** rather than left standing. Quietly misattributing a quote is
 the exact failure this project exists to prevent — shipping it would be indefensible.
+This is proven by the `speaker_revision` fixture and the tests; the live page does not
+show a withdrawal.
 
 ### The measurement that matters
 
@@ -182,7 +189,7 @@ memory, alerts = step(memory, event, utterances)
 
 `engine/` imports nothing that touches a socket, a microphone or a model. That is a hard property — it is what let the whole detection layer be built and tested before any API was wired.
 
-The browser holds the memory and posts it back with each extraction call, so the serverless functions stay stateless.
+By design, the browser holds the memory and posts it back with each extraction call, so the serverless functions can stay stateless. That path is not deployed: the live site is static (DR-027) and reads a pre-built `demo.json`.
 
 ```
 engine/
